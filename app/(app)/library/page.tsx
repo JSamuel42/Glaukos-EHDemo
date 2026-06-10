@@ -116,6 +116,10 @@ function LibraryPageInner() {
     const idx = allArticles.findIndex(a => a.id === targetArticleId);
     if (idx < 0) return;
 
+    // Deliberate synchronous state sync in response to the ?article= URL
+    // param (an external input, not render-derived state) — the cascading
+    // render is intended here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFilterState(EMPTY_FILTERS);
     setSelectedIds(new Set());
     setPage(Math.floor(idx / PAGE_SIZE) + 1);
@@ -145,6 +149,9 @@ function LibraryPageInner() {
     // the target row's page, and this effect would otherwise overwrite
     // that page number back to 1.
     if (targetArticleId) return;
+    // Reset to page 1 whenever the active filters change — intentional
+    // state sync driven by filterState, not a render-derived value.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
   }, [filterState, targetArticleId]);
 

@@ -161,7 +161,9 @@ export default function LibraryTable({
 
   const allOnPageSelected = sorted.length > 0 && sorted.every(a => selectedIds.has(a.id));
 
-  function SortHeader({ k, label }: { k: SortKey; label: string }) {
+  // Render helper (plain function, not a component) so React doesn't treat
+  // it as a component declared during render — keeps row sort state stable.
+  function renderSortHeader(k: SortKey, label: string) {
     const active = sortKey === k;
     return (
       <button
@@ -213,16 +215,16 @@ export default function LibraryTable({
                 className={cn(headerCellBase, 'sticky z-20 bg-serif-muted border-r border-serif-border')}
                 style={stickyCol2}
               >
-                <SortHeader k="id" label="Article ID" />
+                {renderSortHeader('id', 'Article ID')}
               </th>
               <th className={headerCellBase} style={{ width: 160 }}>
-                <SortHeader k="product_display" label="Product" />
+                {renderSortHeader('product_display', 'Product')}
               </th>
               <th className={headerCellBase} style={{ width: 90 }}>
-                <SortHeader k="indication" label="Indication" />
+                {renderSortHeader('indication', 'Indication')}
               </th>
               <th className={headerCellBase} style={{ width: 360 }}>
-                <SortHeader k="title" label="Title" />
+                {renderSortHeader('title', 'Title')}
               </th>
               <th className={headerCellBase} style={{ width: 110 }}>
                 <span className="uppercase tracking-[0.06em] text-[10px]">Authors</span>
@@ -231,25 +233,25 @@ export default function LibraryTable({
                 <span className="uppercase tracking-[0.06em] text-[10px]">Journal / Conference</span>
               </th>
               <th className={headerCellBase} style={{ width: 110 }}>
-                <SortHeader k="pub_date" label="Date" />
+                {renderSortHeader('pub_date', 'Date')}
               </th>
               <th className={headerCellBase} style={{ width: 100 }}>
                 <span className="uppercase tracking-[0.06em] text-[10px]">Pub link</span>
               </th>
               <th className={headerCellBase} style={{ width: 110 }}>
-                <SortHeader k="pub_type" label="Pub type" />
+                {renderSortHeader('pub_type', 'Pub type')}
               </th>
               <th className={headerCellBase} style={{ width: 110 }}>
-                <SortHeader k="study_type" label="Study type" />
+                {renderSortHeader('study_type', 'Study type')}
               </th>
               <th className={headerCellBase} style={{ width: 180 }}>
                 <span className="uppercase tracking-[0.06em] text-[10px]">Study design</span>
               </th>
               <th className={headerCellBase} style={{ width: 130 }}>
-                <SortHeader k="geography" label="Geography" />
+                {renderSortHeader('geography', 'Geography')}
               </th>
               <th className={headerCellBase} style={{ width: 110 }}>
-                <SortHeader k="sponsor" label="Sponsor" />
+                {renderSortHeader('sponsor', 'Sponsor')}
               </th>
               <th className={headerCellBase} style={{ width: 220 }}>
                 <span className="uppercase tracking-[0.06em] text-[10px]">Patient population</span>

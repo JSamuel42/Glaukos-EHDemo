@@ -250,7 +250,6 @@ export async function POST(req: NextRequest) {
         controller.close();
 
         if (process.env.NODE_ENV !== 'production' && cacheUsage) {
-          // eslint-disable-next-line no-console
           console.log('[chat] cache:', {
             module: body.moduleKey,
             write: cacheUsage.cache_creation_input_tokens ?? 0,

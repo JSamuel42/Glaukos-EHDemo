@@ -61,7 +61,6 @@ export function Funnel({ funnel, onSwitchFunnel }: Props) {
       a.href = dataUrl;
       a.click();
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.warn('PNG export failed', err);
       window.alert('Export to PNG failed — see console for details.');
     }

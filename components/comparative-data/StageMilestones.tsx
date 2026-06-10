@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { ALL_PRODUCTS } from '@/lib/comparative-data/data';
 import type { ProductEntry } from '@/lib/comparative-data/types';
 import { TRIAL_MILESTONES } from '@/lib/comparative-data/trial-milestones';
-import { cn } from '@/lib/cn';
 
 /**
  * Product Milestones — stage-by-stage development → access pathway.
