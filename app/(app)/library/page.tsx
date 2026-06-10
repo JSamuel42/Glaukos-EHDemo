@@ -3,7 +3,8 @@
 import { Suspense, useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, Sparkles, CalendarClock, Clock, FileText } from 'lucide-react';
-import { ARTICLES, type Article } from '@/lib/library/data';
+import { type Article } from '@/lib/library/data';
+import { useLibraryStore } from '@/lib/library/store';
 import {
   EMPTY_FILTERS,
   applyFilters,
@@ -99,6 +100,8 @@ function LibraryPageInner() {
   const [page, setPage] = useState(1);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
+  const { allArticles } = useLibraryStore();
+
   const searchParams = useSearchParams();
   const targetArticleId = searchParams?.get('article') ?? null;
 
@@ -110,7 +113,7 @@ function LibraryPageInner() {
   // when the ID doesn't match.
   useEffect(() => {
     if (!targetArticleId) return;
-    const idx = ARTICLES.findIndex(a => a.id === targetArticleId);
+    const idx = allArticles.findIndex(a => a.id === targetArticleId);
     if (idx < 0) return;
 
     setFilterState(EMPTY_FILTERS);
@@ -130,9 +133,9 @@ function LibraryPageInner() {
       clearTimeout(scrollT);
       clearTimeout(clearT);
     };
-  }, [targetArticleId]);
+  }, [targetArticleId, allArticles]);
 
-  const filtered = useMemo(() => applyFilters(ARTICLES, filterState), [filterState]);
+  const filtered = useMemo(() => applyFilters(allArticles, filterState), [allArticles, filterState]);
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -159,9 +162,9 @@ function LibraryPageInner() {
   // passing an attachedItemIdsOverride into sendMessage — they don't depend
   // on selection state having propagated.
   useEffect(() => {
-    const items = ARTICLES.filter(a => selectedIds.has(a.id)).map(toAttachedItem);
+    const items = allArticles.filter(a => selectedIds.has(a.id)).map(toAttachedItem);
     setAttachedItems(items);
-  }, [selectedIds, setAttachedItems]);
+  }, [selectedIds, setAttachedItems, allArticles]);
 
   function toggleSelected(id: string) {
     setSelectedIds(curr => {
@@ -238,13 +241,13 @@ function LibraryPageInner() {
         const newFilter = p.buildFilter();
         setFilterState(newFilter);
         setSelectedIds(new Set());
-        const matched = applyFilters(ARTICLES, newFilter);
+        const matched = applyFilters(allArticles, newFilter);
         summariseSubset(matched, p.contextPhrase);
       },
     }));
     setCustomSuggestedQuestions(presets);
     return () => setCustomSuggestedQuestions(null);
-  }, [setCustomSuggestedQuestions, summariseSubset]);
+  }, [setCustomSuggestedQuestions, summariseSubset, allArticles]);
 
   // Summarise-button visibility + label
   const filtersActive = useMemo(() => isFilterActive(filterState), [filterState]);
@@ -261,19 +264,19 @@ function LibraryPageInner() {
 
   const handleSummariseClick = useCallback(() => {
     if (hasSelection) {
-      const selected = ARTICLES.filter(a => selectedIds.has(a.id));
+      const selected = allArticles.filter(a => selectedIds.has(a.id));
       const noun = selected.length === 1 ? 'selected article' : 'selected articles';
       summariseSubset(selected, noun);
     } else if (filtersActive) {
       summariseSubset(filtered, 'articles matching the current filters');
     }
-  }, [hasSelection, filtersActive, selectedIds, filtered, summariseSubset]);
+  }, [hasSelection, filtersActive, selectedIds, filtered, summariseSubset, allArticles]);
 
   // Indicator 1 label adapts: "22 articles" when no filters, "7 of 22" when filtered.
-  const isFiltered = filtered.length !== ARTICLES.length;
+  const isFiltered = filtered.length !== allArticles.length;
   const primaryLabel = isFiltered
-    ? `${filtered.length} of ${ARTICLES.length} articles`
-    : `${ARTICLES.length} articles`;
+    ? `${filtered.length} of ${allArticles.length} articles`
+    : `${allArticles.length} articles`;
 
   return (
     <div className="px-8 py-7">

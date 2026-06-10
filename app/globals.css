@@ -25,6 +25,11 @@
   --evhub-mint:    #5DCAA5;
   --evhub-purple:  #AFA9EC;
   --evhub-blue:    #85B7EB;
+
+  /* ── Confidence palette (Literature Reviews screening: high/mid/low) */
+  --conf-high-bg: #EAF3DE; --conf-high-text: #27500A; --conf-high-border: #4A8B15;
+  --conf-mid-bg:  #FAEEDA; --conf-mid-text:  #633806; --conf-mid-border:  #BA7517;
+  --conf-low-bg:  #FCEBEB; --conf-low-text:  #791F1F; --conf-low-border:  #C0392B;
 }
 
 /* ─── Reset ──────────────────────────────────────────────────────────────── */
