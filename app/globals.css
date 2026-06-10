@@ -1,0 +1,195 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Serif editorial design system tokens ────────────────────────────────── */
+:root {
+  --serif-background:        #FAFAF8;
+  --serif-foreground:        #1A1A1A;
+  --serif-muted:             #F5F3F0;
+  --serif-muted-foreground:  #6B6B6B;
+  --serif-accent:            #083860;
+  --serif-accent-secondary:  #0A4F80;
+  --serif-accent-foreground: #FFFFFF;
+  --serif-border:            #E8E4DF;
+  --serif-card:              #FFFFFF;
+  --serif-ring:              #083860;
+
+  /* Shadows — warm-tinted, very subtle */
+  --shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.04);
+  --shadow-md: 0 4px 12px rgba(26, 26, 26, 0.06);
+  --shadow-lg: 0 8px 24px rgba(26, 26, 26, 0.08);
+
+  /* ── EvHub-S brand palette (navy top bar, teal/mint accent, purple support) */
+  --evhub-navy:    #0E1B2C;
+  --evhub-mint:    #5DCAA5;
+  --evhub-purple:  #AFA9EC;
+  --evhub-blue:    #85B7EB;
+}
+
+/* ─── Reset ──────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────── */
+html {
+  font-family: var(--font-source-sans), system-ui, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--serif-background);
+  color: var(--serif-foreground);
+  line-height: 1.75;
+  letter-spacing: 0.01em;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--serif-foreground);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ─── Editorial utilities ────────────────────────────────────────────────── */
+
+/* IBM Plex Mono small caps — used for section labels and field headings */
+.small-caps {
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--serif-accent);
+}
+
+/* Thin rule line — flex child, stretches to fill */
+.rule-line {
+  height: 1px;
+  background: var(--serif-border);
+  flex: 1;
+}
+
+/* ─── Landing page module cards ──────────────────────────────────────────── */
+
+.eh-card {
+  background: #FFFFFF;
+  border: 1px solid #E8E4DF;
+  border-radius: 8px;
+  padding: 1.625rem 1.5rem 1.375rem;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 200ms ease-out, box-shadow 200ms ease-out, transform 200ms ease-out;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.eh-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--evhub-mint), var(--evhub-purple));
+}
+
+.eh-card:hover {
+  border-color: var(--evhub-mint);
+  box-shadow: 0 4px 16px rgba(15, 110, 86, 0.08);
+}
+
+/* Coming-soon variant: no pointer, no hover lift, gentler accent rule,
+   and the whole tile reads in dark grey rather than the standard near-
+   black so it visually recedes from the live modules. */
+.eh-card--coming-soon {
+  cursor: default;
+  opacity: 0.95;
+}
+.eh-card--coming-soon:hover {
+  border-color: #E8E4DF;
+  box-shadow: none;
+}
+.eh-card--coming-soon::before {
+  background: linear-gradient(90deg, rgba(93,202,165,0.45), rgba(175,169,236,0.45));
+}
+.eh-card--coming-soon .eh-card-title {
+  color: #4B5563; /* slate-600 — dark grey, not black */
+}
+.eh-card--coming-soon .eh-card-icon {
+  background: rgba(75, 85, 99, 0.10);
+  color: #4B5563;
+}
+
+.eh-card-title {
+  font-family: var(--font-source-sans), system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin: 0 0 0.5rem;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+}
+
+.eh-card-desc {
+  font-size: 0.875rem;
+  color: #6B6B6B;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+  flex: 1;
+}
+
+.eh-card-cta {
+  font-family: var(--font-source-sans), system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--evhub-navy);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  transition: gap 200ms ease-out, color 200ms ease-out;
+}
+
+.eh-card:hover .eh-card-cta {
+  gap: 0.625rem;
+  color: #0F6E56;
+}
+
+.eh-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(93, 202, 165, 0.12);
+  color: #0F6E56;
+  margin-bottom: 0.875rem;
+}
+
+/* ─── Chat panel "thinking" dot ─────────────────────────────────────────────
+   Used next to the chat panel title to indicate AI in-flight state. Static
+   teal dot when idle; gentle scale + opacity pulse while streaming.            */
+@keyframes ai-thinking {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50%      { opacity: 1;   transform: scale(1.1); }
+}
+.animate-ai-thinking {
+  animation: ai-thinking 1.4s ease-in-out infinite;
+}

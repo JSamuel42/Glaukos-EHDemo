@@ -1,0 +1,442 @@
+{
+  "documents": [
+    {
+      "id": "doc-002",
+      "date": "2025-04-04T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Global",
+      "title": "Alnyx (alphabetinib) - FDA Prescribing Information",
+      "description": "Patient-facing leaflet approved by the FDA that explains the medication's uses, dosing, side effects, warnings, and storage in plain language to support safe and informed use.",
+      "type": "External",
+      "tag": "Decision",
+      "agency": "FDA",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-003",
+      "date": "2025-04-01T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Global",
+      "title": "Alnyx (alphabetinib) - EMA CHMP Opinion",
+      "description": "Formal scientific recommendation from EMA's Committee for Medicinal Products for Human Use on whether to grant EU marketing authorisation, specifying the approved indication, conditions of use, and post-authorisation obligations",
+      "type": "External",
+      "tag": "Recommendation",
+      "agency": "EMA",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-004",
+      "date": "2025-03-31T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Global",
+      "title": "Alnyx (alphabetinib) - EMA - EPAR Assessment Report",
+      "description": "European Public Assessment Report capturing the full scientific evaluation behind the CHMP Opinion (quality, non-clinical, clinical, and benefit-risk) and the basis for the authorisation decision",
+      "type": "External",
+      "tag": "Recommendation",
+      "agency": "EMA",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-005",
+      "date": "2025-03-29T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Global",
+      "title": "Alnyx (alphabetinib) - Cross-Indication Objection Handler",
+      "description": "Consolidated anticipated Payer objections and approved responses across the full label, organised by indication, to support consistent messaging on efficacy, safety, mechanism, administration, place in therapy, and cost-offsets.",
+      "type": "Internal",
+      "tag": "Core Materials",
+      "agency": "Global CVT",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-006",
+      "date": "2025-03-11T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Global",
+      "title": "Alnyx (alphabetinib) - Objection Handler - Triple class exposed Multiple Myeloma",
+      "description": "Evidence-based responses to anticipated Payer objections specific to the triple-class exposed (4L+) multiple myeloma indication, covering efficacy versus relevant comparators, safety management, patient selection, and sequencing considerations",
+      "type": "Internal",
+      "tag": "Core Materials",
+      "agency": "Global CVT",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-007",
+      "date": "2025-02-14T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Global",
+      "title": "GVD - Alnyx (alphabetinib) for ALK positive anaplastic large cell lymphoma (ALCL) v4",
+      "description": "Updated master evidence document supporting global market access and HTA engagement, with updated clinical and economic value of Alnyx for ALCL including real-world data on long-term efficacy and cost-offsets.",
+      "type": "Internal",
+      "tag": "Core Materials",
+      "agency": "Global CVT",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-008",
+      "date": "2025-01-07T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Global",
+      "title": "GVD - Alnyx (alphabetinib) for triple class exposed Multiple Myeloma (4L MM) v1",
+      "description": "Master evidence document supporting global market access and HTA engagement—articulating unmet medical need, product profile, clinical and economic value, and budget impact with Alnyx for TCE MM",
+      "type": "Internal",
+      "tag": "Core Materials",
+      "agency": "Global CVT",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-009",
+      "date": "2025-10-01T00:00:00",
+      "product": "Blenrep (Belantamab mafadotin)",
+      "geography": "Canada",
+      "title": "CDA-AMC Initial assessment & Reimbursement Recommendation",
+      "description": "CDA's reimbursement recommendation for Blenrep, in combination with bortezomib and dexamethasone for the treatment of adults with relapsed or refractory multiple myeloma who have received at least 1 prior line of therapy.",
+      "type": "External",
+      "tag": "Recommendation",
+      "agency": "CDA-AMC",
+      "summary": "Recommended with restrictions\nRecommendation: should only be covered to treat adult patients with relapsed or refractory multiple myeloma who are in relatively good health and have already tried at least 1 other treatment for this disease. Should not be reimbursed in patients who were previously treated with an anti-BCMA therapy, patients who have experienced intolerance to bortezomib, or patients whose disease is refractory to bortezomib.\nShould only be reimbursed if it is prescribed under the care of clinicians with expertise in the diagnosis and management of patients with multiple myeloma, and if the cost of Blenrep in combination with bortezomib and dexamethasone is reduced. \nReasoning: \n• Evidence from a clinical trial demonstrated that Blenrep in combination with bortezomib and dexamethasone may delay disease progression and prolong life in adult patients with relapsed or refractory multiple myeloma, compared to daratumumab in combination with bortezomib and dexamethasone (DVd).\n• Blenrep meets some patient needs, as it is an alternative treatment option that may offer benefits in delaying progression of disease and improved survival compared to DVd.\n• Based on the CDA-AMC assessment of the health economic evidence, Blenrep does not represent good value to the health care system at the public list price. A price reduction is therefore required.\n• Based on public list prices, Blenrep is estimated to cost the public drug plans approximately $940 million over the next 3 years. However, the actual budget impact is uncertain and will depend on several factors, including real-world dosing patterns, the extent of uptake across jurisdictions, and the distribution of subsequent therapies in the\ntreatment pathway.\nEvidence submitted: \t\nThe submission presented results from the pivotal DREAMM-7 phase III trial, which was an open-label, randomized controlled study. It compared the combination of belantamab mafodotin, bortezomib, and dexamethasone (BVd) against daratumumab, bortezomib, and dexamethasone (DVd) in adult patients with relapsed or refractory multiple myeloma. The main focus of the trial was progression-free survival (PFS), while secondary outcomes included overall survival (OS), duration of response (DoR), minimal residual disease (MRD) negativity, overall response rate (ORR), complete response rate (CRR), and safety profiles. Additionally, the submission incorporated indirect treatment comparisons (ITC) and network meta-analyses (NMA) to further evaluate the efficacy and safety of the treatments. These comprehensive analyses aimed to provide robust evidence supporting the clinical benefits and risks associated with the BVd regimen compared to the DVd regimen. The ITC suggested favourable progression-free survival (PFS) and overall survival (OS) for BVd, but CDA notes results were limited by heterogeneity and uncertainty, and lack of harms data.",
+      "has_summary": true
+    },
+    {
+      "id": "doc-010",
+      "date": "2024-12-01T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Canada",
+      "title": "Response to CDA-AMC on Additional Information request",
+      "description": "Response to CDA-AMC review team's request for additional data on baseline and prior therapies, including daily dose, median by treatment group for 2L and 2L+ setting",
+      "type": "Internal",
+      "tag": "Response",
+      "agency": "CDA-AMC",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-011",
+      "date": "2024-12-01T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Canada",
+      "title": "CDA-AMC Sponsor comments",
+      "description": "Feedback on draft reimbursement review, providing points of clarification on minimum treatment duration, and challenges to definitions applied for \"refractory\"",
+      "type": "Internal",
+      "tag": "Response",
+      "agency": "CDA-AMC",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-012",
+      "date": "2025-01-01T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "France",
+      "title": "HAS Submission Dossier - Note d'intérêt thérapeutique (NIT)",
+      "description": "Submission to HAS - including product information, clinical data and outlining case for clinical added value.",
+      "type": "Internal",
+      "tag": "Submission",
+      "agency": "HAS",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-013",
+      "date": "2025-02-01T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "France",
+      "title": "Response to HAS request for safety data (Deaths - Adjudicated and Notice of death listings)",
+      "description": "Submission in response to specific safety listing from Phase III study for Alnyx, which cover detailed data on patient deaths and adjudicated mortality outcomes, to provide additional transparency on mortality data for HTA.",
+      "type": "Internal",
+      "tag": "Response",
+      "agency": "HAS",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-014",
+      "date": "2020-12-16T00:00:00",
+      "product": "Blenrep (Belantamab mafadotin)",
+      "geography": "France",
+      "title": "HAS (TC) - Initial assessment for 4L (TCE) MM",
+      "description": "French HTA reimbursement decision for Blenrep for triple class exposed multiple myeloma, with Phase II DREAMM-2 study",
+      "type": "External",
+      "tag": "Recommendation",
+      "agency": "HAS",
+      "summary": "Decision: SMR - Important, ASMR V\nBlenrep considered as a fallback treatment when all therapeutic options have been exhausted, on the advice of a multidisciplinary consultation meeting. The Commission gives a favourable opinion on the inclusion on the list of specialities approved for use by hospitals in the indication \"as monotherapy for the treatment of adult patients with multiple myeloma, having received at least 4 previous treatments and whose disease is refractory to at least one proteasome inhibitor, one immunomodulatory agent and one anti-CD38 monoclonal antibody, and whose disease has progressed during the last treatment\" and at the dosages of the MA. ASMR: V\nConsidering:\n-short-term efficacy data obtained on the overall response (approximately 32% of the population in the group of patients who received the dose retained by the MA, namely 2.5 mg/kg (97.5% CI [21.7; 43.6]), with a median duration of response of 11 months), in clinical situations that are life-threatening and for which therapeutic options are limited,\nuncertainties concerning the clinical relevance of the primary endpoint selected (overall response rate) and its transferability to overall survival or improvement in quality of life. \n- uncertainties concerning the actual quantity of effect of this drug due to a lack of comparative data, in a context where a formalized a priori comparison with a historical cohort of patients would have been possible but was not carried out, - uncertainties concerning the clinical efficacy and its maintenance in the longer term, in a context where the follow-up is extremely short (median follow-up ofapproximately 13 months),\nsignificant short-term toxicity, with a particular profile, particularly ocular (with grade 3 or 4 keratopathy reported in 30% of patients in the 2.5 mg/kg group), and the absence of long-term tolerance data,\nand despite the interest in having a drug that has been evaluated after failure of an anti-CD38 antibody in a context of unmet medical need, the Transparency Commission considers that in the current state of the data Blenrep does not provide an improvement in medical service rendered (ASMR V) in the management of heavily treated MM patients. \nThe company submitted two indirect comparisons: a Matching-Adjusted Indirect Comparison (MAIC) of belantamab mafodotin versus selinexor plus dexamethasone, using published data from the STORM study, and a network indirect comparison using data from selinexor plus dexamethasone as well as data from a subpopulation of the US observational MAMMOTH study (patients refractory to an anti-CD38 monoclonal antibody and receiving subsequent treatment). However, these comparisons were not considered in the evaluation because selinexor was not deemed a relevant comparator by the Commission.",
+      "has_summary": true
+    },
+    {
+      "id": "doc-015",
+      "date": "2023-10-25T00:00:00",
+      "product": "Blenrep (Belantamab mafadotin)",
+      "geography": "France",
+      "title": "HAS (TC) - Re-assessment for 4L (TCE) MM",
+      "description": "French HTA re-assessment for Blenrep for triple class exposed multiple myeloma, with Phase III DREAMM-3 data, longer term follow-up data and Observational real-world data from the IFM and ALFA studies.",
+      "type": "External",
+      "tag": "Recommendation",
+      "agency": "HAS",
+      "summary": "Decision: SMR - Insufficient\nReasoning: effectiveness/adverse effects ratio is poorly established in phase II study (DREAMM-2) and the absence of demonstration of superiority of BLENREP compared to the combination of pomalidomide and low-dose dexamethasone in phase III (DREAMM-3), in terms of progression- free survival and there are therapeutic alternatives.\nCompany submitted real-world data on efficacy and tolerability from named patient access program (IFM) and cohort & post-access program (ALFA), but the Commission highlighted methodological limitations and incomplete data. \nNo indirect treatment comparisons (ITCs) were used or considered in the evaluation.",
+      "has_summary": true
+    },
+    {
+      "id": "doc-016",
+      "date": "2023-10-05T00:00:00",
+      "product": "Carvyti (ciltacabtagene autoleucel)",
+      "geography": "Germany",
+      "title": "G-BA - Reassessment - 4L (TCE) MM",
+      "description": "Final G-BA resolution (Beschluss) - final binding document detailing decision on extent of added benefit, serving as basis for price negotiations.",
+      "type": "External",
+      "tag": "Decision",
+      "agency": "G-BA",
+      "summary": "Decision: Non-quantifiable benefit; Reimbursed as per label\nEvidence submitted: Data from the single-arm, open-label, phase Ib/II CARTITUDE-1 study on the efficacy and safety of ciltacabtagene autoleucel in patients with RR MM (≥3 prior therapies) were submitted. An indirect comparison with the prospective, non-interventional Loco MMotion study was also presented. In the commentary process, pooled analyses with CARTITUDE-4 and Loco MMotion, as well as data from the randomized, controlled phase III CARTITUDE-4 study (subpopulation with 3 prior therapies), were also submitted. Primary endpoint: overall response rate. Secondary endpoints: overall survival, progression-free survival, quality of life, and adverse events.\nIndirect comparison between CARTITUDE-1 and Loco MMotion (weighted analyses, propensity score matching, pooled analyses with CARTITUDE-4), but assessed as insufficient for robust statements to quantify the added benefit. Yes, real-world evidence was considered in the form of the prospective, non-interventional Loco MMotion study, but with considerable methodological uncertainties regarding suitability and comparability. The main positive decision drivers were the high unmet medical need in patients with relapsed/refractory multiple myeloma after at least three prior therapies, the innovative mechanism of action (CAR-T cell therapy), and the high response rates and prolonged progression-free survival observed in the pivotal study. The therapy addresses a population with limited treatment options and poor prognosis. The HTA body acknowledged the potential for significant clinical benefit, but due to the lack of comparative data, the added benefit could not be quantified. The orphan drug status and conditional approval under special conditions were also considered.",
+      "has_summary": true
+    },
+    {
+      "id": "doc-017",
+      "date": "2023-09-15T00:00:00",
+      "product": "Carvyti (ciltacabtagene autoleucel)",
+      "geography": "Germany",
+      "title": "G-BA Underlying reasons and oral hearing - 4L (TCE) MM",
+      "description": "Comments from Stakeholders (Stellungnahme): on dossier assessment by pharmaceutical companies, patient organizations, and medical associations (written statements) and transcript of the Oral Hearing (Protokoll der mündlichen Verhandlung)",
+      "type": "External",
+      "tag": "Opinion",
+      "agency": "G-BA",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-018",
+      "date": "2025-07-07T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Germany",
+      "title": "Nutzenbewertungsdossier -G-BA: Submission for reimbursement - 4L (TCE) MM",
+      "description": "Comprehensive submission of clinical and regulatory data for alphabetinib as part of the benefit asessement process.",
+      "type": "Internal",
+      "tag": "Submission",
+      "agency": "German MA",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-019",
+      "date": "2025-08-15T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Germany",
+      "title": "Response to G-BA data request on scientific advice",
+      "description": "Response to G-BA's request for regulatory and scientific advice interactions informing clinical development program, to inform G-BA's evaluation.",
+      "type": "Internal",
+      "tag": "Response",
+      "agency": "German MA",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-020",
+      "date": "2025-08-15T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Germany",
+      "title": "Response to G-BA data request on scientific advice",
+      "description": "Response to G-BA's request; providing complementary additional analyses provided by local CRO to address specific concerns raised in early benefit assessment",
+      "type": "Internal",
+      "tag": "Response",
+      "agency": "German MA",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-021",
+      "date": "2025-12-03T00:00:00",
+      "product": "Talvey (talquetamab)",
+      "geography": "England",
+      "title": "NICE Re-assesment for TCE MM (4LMM)",
+      "description": "NICE technology appraisal guidance and recommendations on talquetamab for treating relapsed and refractory multiple myeloma after 3 or more treatments in adults.",
+      "type": "External",
+      "tag": "Recommendation",
+      "agency": "NICE",
+      "summary": "Outcome: Recommended, with Patient access scheme and commercial agreement\nEvidence submitted: The main clinical-effectiveness data for talquetamab are from the MonumenTAL-1 trial, a phase 1/2, single-arm, open-label, multicentre study involving patients with triple-class-exposed relapsed and refractory multiple myeloma. Results were reported for cohort C (154 patients) and cohort A (143 patients), with a median follow-up of 31.2 months. The overall response rate was 69.5%. Median overall survival could not be estimated, while median progression-free survival was 11.2 months. Additionally, indirect comparisons were made with teclistamab, using data from the MajesTEC-1 trial.\nCommittee and ERG considered the ITC performed between talquetamab and teclistamab, with hazard ratios and scenario analyses discussed. Real-world evidence studies from Germany and France submitted by the company were also considered, as well as retrospective non-interventional studies (REALiTEC and REALiTAL) including UK patients.\n\nITC and real-world data showing better OS than teclistamab was a key driver of positive decision highlighted by Committee.",
+      "has_summary": true
+    },
+    {
+      "id": "doc-022",
+      "date": "2025-07-01T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "England",
+      "title": "Responses to clarification questions by NICE",
+      "description": "Responses to clarification questions raised by committee after initial review of submission",
+      "type": "Internal",
+      "tag": "Response",
+      "agency": "NICE",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-023",
+      "date": "2025-08-01T00:00:00",
+      "product": "Alnyx (alphabetinib)",
+      "geography": "England",
+      "title": "NICE Mock ACM and Objection handler",
+      "description": "For internal training only! Review of apparaisal committee meeting feedback and approaches to objection handling",
+      "type": "Internal",
+      "tag": "Other",
+      "agency": "NICE",
+      "summary": null,
+      "has_summary": false
+    },
+    {
+      "id": "doc-024",
+      "date": "2020-07-01T00:00:00",
+      "product": "Darzalex (daratumumab)",
+      "geography": "Australia",
+      "title": "PBAC Re-assessment for 2L+ MM",
+      "description": "Public summary document of PBAC meeting, outlining committee's considerations and reasoning behind recommendation",
+      "type": "External",
+      "tag": "Recommendation",
+      "agency": "PBAC",
+      "summary": "Recommended with Restrictions, with special pricing arrangements (revenue cap and % rebate) and risk sharing agreement\nReasoning: cost-effectiveness of daratumumab would be acceptable if the\nincremental cost effectiveness ratio (ICER) was reduced to be less than $75,000 per quality adjusted life year (QALY). The PBAC was satisfied that DBd provides, for some patients, a significant improvement in efficacy over bortezomib plus dexamethasone (Bd). The PBAC recalled that it had previously considered the proposed clinical place in therapy as a second-line treatment only was reasonable provided daratumumab monotherapy was available to eligible patients in later-line settings on a compassionate basis. \nEvidence submitted: The clinical evidence provided is derived from the CASTOR trial, specifically utilizing data from the fifth interim analysis. Also included an updated indirect treatment comparison (ITC) between DBd (daratumumab, bortezomib, dexamethasone) and Cd (carfilzomib, dexamethasone). The ITC demonstrated a statistically significant difference in PFS in favor of DBd (HR = 0.49; 95% CI: 0.30, 0.80), and a clinically significant trend toward superior OS for DBd compared with Cd. Potential transitivity issues were noted due to differences in disease stage and treatment duration between trials. Real-world evidence was referenced in the pre-PBAC response, noting that real-world therapy data demonstrate that progression-free survival and treatment duration shorten with each line of therapy. However, no formal RWE studies or registry data were submitted as part of the main evidence package.\nThe PBAC highlighted significant improvements in progression-free survival (PFS) and a trend toward improved overall survival (OS) for DBd compared to Bd, as demonstrated in the CASTOR trial. The clinical need for additional RRMM treatments was acknowledged, and the PBAC considered the clinical place in therapy for DBd appropriate. The PBAC also noted the supportive consumer and stakeholder comments, the manageable safety profile, and the inclusion of indirect comparisons with other relevant regimens. These factors collectively contributed to the positive aspects of the clinical assessment. The ITC was considered partially supportive but not definitive for reimbursement.",
+      "has_summary": true
+    },
+    {
+      "id": "doc-025",
+      "date": "2020-04-01T00:00:00",
+      "product": "Darzalex (daratumumab)",
+      "geography": "Australia",
+      "title": "Economics Sub-Committee (ESC) advice to PBAC committee on Dazrazlex for 2L+ MM",
+      "description": "ESC Technical evaluation document assessing Darzalex clinical and economic evidence submitted for use in 2L+ setting",
+      "type": "External",
+      "tag": "Opinion",
+      "agency": "PBAC",
+      "summary": null,
+      "has_summary": false
+    }
+  ],
+  "filter_tree": {
+    "products": [
+      "Alnyx (alphabetinib)",
+      "Blenrep (Belantamab mafadotin)",
+      "Carvyti (ciltacabtagene autoleucel)",
+      "Darzalex (daratumumab)",
+      "Talvey (talquetamab)"
+    ],
+    "geographies": [
+      "Global",
+      "Australia",
+      "Canada",
+      "England",
+      "France",
+      "Germany"
+    ],
+    "types": [
+      "External",
+      "Internal"
+    ],
+    "tags": [
+      "Core Materials",
+      "Decision",
+      "Opinion",
+      "Other",
+      "Recommendation",
+      "Response",
+      "Submission"
+    ]
+  },
+  "groups": [
+    {
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Global",
+      "doc_ids": [
+        "doc-002",
+        "doc-003",
+        "doc-004",
+        "doc-005",
+        "doc-006",
+        "doc-007",
+        "doc-008"
+      ],
+      "count": 7
+    },
+    {
+      "product": "Blenrep (Belantamab mafadotin)",
+      "geography": "Canada",
+      "doc_ids": [
+        "doc-009"
+      ],
+      "count": 1
+    },
+    {
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Canada",
+      "doc_ids": [
+        "doc-010",
+        "doc-011"
+      ],
+      "count": 2
+    },
+    {
+      "product": "Alnyx (alphabetinib)",
+      "geography": "France",
+      "doc_ids": [
+        "doc-013",
+        "doc-012"
+      ],
+      "count": 2
+    },
+    {
+      "product": "Blenrep (Belantamab mafadotin)",
+      "geography": "France",
+      "doc_ids": [
+        "doc-015",
+        "doc-014"
+      ],
+      "count": 2
+    },
+    {
+      "product": "Carvyti (ciltacabtagene autoleucel)",
+      "geography": "Germany",
+      "doc_ids": [
+        "doc-016",
+        "doc-017"
+      ],
+      "count": 2
+    },
+    {
+      "product": "Alnyx (alphabetinib)",
+      "geography": "Germany",
+      "doc_ids": [
+        "doc-019",
+        "doc-020",
+        "doc-018"
+      ],
+      "count": 3
+    },
+    {
+      "product": "Talvey (talquetamab)",
+      "geography": "England",
+      "doc_ids": [
+        "doc-021"
+      ],
+      "count": 1
+    },
+    {
+      "product": "Alnyx (alphabetinib)",
+      "geography": "England",
+      "doc_ids": [
+        "doc-023",
+        "doc-022"
+      ],
+      "count": 2
+    },
+    {
+      "product": "Darzalex (daratumumab)",
+      "geography": "Australia",
+      "doc_ids": [
+        "doc-024",
+        "doc-025"
+      ],
+      "count": 2
+    }
+  ]
+}

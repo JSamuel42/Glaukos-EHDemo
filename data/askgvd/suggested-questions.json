@@ -1,0 +1,62 @@
+[
+  {
+    "id": "sq-bun-1",
+    "category": "Burden & unmet need",
+    "text": "What are the key patient subpopulations with the highest unmet need?"
+  },
+  {
+    "id": "sq-bun-2",
+    "category": "Burden & unmet need",
+    "text": "What is the QoL impact of R/R CLL on patients?"
+  },
+  {
+    "id": "sq-bun-3",
+    "category": "Burden & unmet need",
+    "text": "What are the key drivers of socioeconomic burden due to R/R CLL?"
+  },
+  {
+    "id": "sq-sd-1",
+    "category": "Study design",
+    "text": "What were the key features of the pivotal study (RESCUE / PCYC-1102)?"
+  },
+  {
+    "id": "sq-sd-2",
+    "category": "Study design",
+    "text": "How does the RESONATE study compare alphabetinib to standard of care?"
+  },
+  {
+    "id": "sq-sd-3",
+    "category": "Study design",
+    "text": "What patient populations were included in the CLL-3 trial?"
+  },
+  {
+    "id": "sq-eff-1",
+    "category": "Effectiveness",
+    "text": "What are the key efficacy outcomes reported with alphabetinib?"
+  },
+  {
+    "id": "sq-eff-2",
+    "category": "Effectiveness",
+    "text": "How does alphabetinib perform in high-risk patient subgroups (e.g., del(17p))?"
+  },
+  {
+    "id": "sq-eff-3",
+    "category": "Effectiveness",
+    "text": "What is the durability of response with alphabetinib?"
+  },
+  {
+    "id": "sq-cd-1",
+    "category": "Clinical differentiation",
+    "text": "How does alphabetinib differentiate from current single-agent therapies?"
+  },
+  {
+    "id": "sq-cd-2",
+    "category": "Clinical differentiation",
+    "text": "What is the safety profile of alphabetinib relative to existing treatments?"
+  },
+  {
+    "id": "sq-cd-3",
+    "category": "Clinical differentiation",
+    "text": "What is the value of alphabetinib's effect on the immune system?"
+  }
+]
