@@ -130,7 +130,6 @@ function SectionTreeItem({
   onAddChild,
   onDelete,
   addingUnder,
-  siblingCount,
   dragState,
   onDragStart,
   onDragOver,

@@ -116,7 +116,7 @@ interface ReasoningPanelProps {
   guidanceCount: number;
 }
 
-function ReasoningPanel({ reasoning, versionCount: _vc, guidanceCount: _gc }: ReasoningPanelProps) {
+function ReasoningPanel({ reasoning }: ReasoningPanelProps) {
   const fullCount = reasoning.guidance_coverage.filter((g) => g.coverage === 'full').length;
   const total = reasoning.guidance_coverage.length;
   const refCount = reasoning.reference_extractions.length;

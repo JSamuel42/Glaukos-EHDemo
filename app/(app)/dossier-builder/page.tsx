@@ -15,6 +15,9 @@ function DossierListContent() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
+    // Hydrate from the localStorage store on mount (an external system, not
+    // render-derived state) — the synchronous state sync is intended here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDossiers(listDossiers());
     setIsLoading(false);
   }, []);

@@ -80,7 +80,14 @@ function DossierDetailContent() {
     setSections(getDossierSections(dossierId));
   }, [dossierId, router]);
 
-  useEffect(() => { reload(); setIsLoading(false); }, [reload]);
+  useEffect(() => {
+    // Hydrate from the localStorage store on mount / when the loader identity
+    // changes (an external system, not render-derived state) — the cascading
+    // render is intended here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    reload();
+    setIsLoading(false);
+  }, [reload]);
 
   // ── Outline handlers ────────────────────────────────────────────────────────
 
@@ -115,7 +122,7 @@ function DossierDetailContent() {
     setTagModalSection(section);
   }
 
-  function handleSectionUpdate(_updated: DossierSection) {
+  function handleSectionUpdate() {
     reload();
   }
 

@@ -33,6 +33,10 @@ export function DossierTagModal({ section, onSave, onClose }: Props) {
   const [query, setQuery] = useState('');
 
   useEffect(() => {
+    // Re-sync local selection when the incoming linkedIds prop changes (an
+    // external input, not render-derived state) — the cascading render is
+    // intended here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelected(new Set(linkedIds));
   }, [linkedIds.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
 
