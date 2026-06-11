@@ -42,7 +42,7 @@ export default function EpidemiologyPage() {
           Epidemiology — Target Population Funnels
         </h1>
         <p className="text-sm text-serif-muted-foreground mt-1">
-          4L+ MM target population estimates by country
+          Open-angle glaucoma L1→L5 funnel — surgical-eligible (MIGS) population estimates by country
         </p>
       </header>
 

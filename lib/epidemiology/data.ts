@@ -1,29 +1,34 @@
 /**
- * Pre-built 4L+ MM target population funnels for five demo markets.
- * Every funnel uses the same 7-level pathway (Adult Population →
- * Diagnosed Prevalence → 1L eligible → 2L → 3L → 4L → Heavily
- * Pretreated 4L+ target). Only the top-level absolute (country adult
- * population) and the Diagnosed Prevalence percentage differ per
- * country; everything below is shared so the funnels read as
- * comparable across markets.
+ * Open-Angle Glaucoma L1→L5 patient funnels for six demo markets, ending at
+ * the surgical-eligible (MIGS) population — the iStent infinite indication.
  *
- * Publication tagging is deliberately sparse — US and Germany have a
- * couple of tagged Library Article IDs at specific levels, the rest
- * are empty so the demo can show both populated and empty-state
- * publication pop-ups.
+ * Each funnel cascades from total adults aged 40+ down the disease funnel:
+ *   General prevalence → Diagnosed → Treated → Uncontrolled / advanced →
+ *   Surgical-eligible (MIGS).
+ * The tier labels align with the Library's funnel tags (L2 general prevalence,
+ * L3 diagnosed, L4 treated/uncontrolled, L5 surgical-eligible) so the
+ * Epidemiology funnel, the Library, and the dossier tell one consistent story.
+ *
+ * DATA NOTE: per the source evidence base (abstract-only), per-country
+ * conversion rates and the surgical-eligible (MIGS) proportion are NOT directly
+ * reported in the literature — the dossier itself flags this gap. The
+ * percentages below are therefore ILLUSTRATIVE, literature-informed demo
+ * estimates (e.g. higher undiagnosed fractions in Japan and India), not
+ * published figures. General-prevalence anchors draw on the tagged Library
+ * evidence (global incidence, European ~2.6%, US diagnosed ~2.9% of ≥65,
+ * Northeast-Asia myopic OAG). They are per-country and editable in the workspace.
  */
 
-export type Country = 'US' | 'UK' | 'DE' | 'FR' | 'JP';
+export type Country = 'US' | 'UK' | 'DE' | 'FR' | 'JP' | 'IN';
 
 export interface FunnelLevel {
   id: string;
   name: string;
   description: string;
   /** % applied to the level above. Level 0 is anchored to topLevelAbsolute
-   *  and uses 100 as a sentinel. Diagnosed Prevalence (l1) takes a fraction
-   *  of total adult population (e.g. 0.062% in the US). */
+   *  and uses 100 as a sentinel. */
   percentage: number;
-  /** Final level — renders in mint to call out the Alnyx target population. */
+  /** Final level — renders in mint to call out the surgical-eligible (iStent infinite) target. */
   isTarget?: boolean;
   /** Library Article IDs tagged to this level. Resolved at render-time
    *  against ARTICLES from /lib/library/data.ts. */
@@ -48,135 +53,145 @@ export const COUNTRY_FLAGS: Record<Country, string> = {
   DE: '🇩🇪',
   FR: '🇫🇷',
   JP: '🇯🇵',
+  IN: '🇮🇳',
 };
 
-/**
- * Standard 4L MM funnel template. `pubOverrides` lets each country
- * sparingly tag publications to specific levels. The top-level
- * Diagnosed Prevalence % is overridden per country at the FUNNELS
- * call-site because rates differ markedly across markets.
- */
-function fourLMMLevels(pubOverrides: Record<string, string[]> = {}): FunnelLevel[] {
+// Library Article IDs tagged at each funnel tier (shared across markets — the
+// underlying evidence is global/regional, classified by funnel level).
+const PUBS = {
+  overview: ['Jayaram, 2023'],
+  prevalence: ['Shan, 2024', 'Gallo Afflitto, 2022', 'Founti, 2021', 'Jeong, 2021'],
+  diagnosed: ['Tseng, 2023', 'Downs, 2024', 'Aspberg, 2021'],
+  treated: ['Phu, 2021', 'Newman-Casey, 2019'],
+  uncontrolled: ['King, 2024', 'Kastner, 2019', 'Nayyar, 2022', 'Shin, 2024', 'Seresirikachorn, 2025'],
+  surgical: ['Bicket, 2021', 'Voykov, 2025', 'Loon, 2024', 'Swaminathan, 2024', 'Panarelli, 2023', 'Governatori, 2024', 'Sandhu, 2021'],
+} as const;
+
+/** Per-country conversion percentages down the OAG funnel. */
+interface FunnelRates {
+  /** General OAG prevalence as % of adults 40+. */
+  prevalence: number;
+  /** Diagnosed as % of prevalent (the rest are undiagnosed). */
+  diagnosed: number;
+  /** Treated as % of diagnosed (on IOP-lowering therapy). */
+  treated: number;
+  /** Uncontrolled / advanced despite therapy, as % of treated. */
+  uncontrolled: number;
+  /** Surgical-eligible (MIGS) as % of uncontrolled. */
+  surgical: number;
+}
+
+/** Build the 6-tier OAG funnel for a market from its conversion rates. */
+function glaucomaLevels(r: FunnelRates): FunnelLevel[] {
   return [
     {
       id: 'l0',
-      name: 'Total Adult Population',
-      description: 'Adults aged 18+',
+      name: 'Total Adult Population (40+)',
+      description: 'Adults aged 40 and over — the at-risk denominator',
       percentage: 100, // sentinel — anchor lives on topLevelAbsolute
-      pubIds: pubOverrides.l0 ?? [],
+      pubIds: [...PUBS.overview],
     },
     {
       id: 'l1',
-      name: 'Diagnosed Prevalence of MM',
-      description: 'All stages — point prevalence',
-      percentage: 0.062, // overridden per country
-      pubIds: pubOverrides.l1 ?? [],
+      name: 'General Prevalence of OAG',
+      description: 'L2 · open-angle glaucoma across the population (diagnosed + undiagnosed)',
+      percentage: r.prevalence,
+      pubIds: [...PUBS.prevalence],
     },
     {
       id: 'l2',
-      name: 'Eligible for Systemic 1L Therapy',
-      description: 'After diagnosis, fit for active treatment',
-      percentage: 87,
-      pubIds: pubOverrides.l2 ?? [],
+      name: 'Diagnosed OAG',
+      description: 'L3 · identified within the healthcare system (large undiagnosed fraction excluded)',
+      percentage: r.diagnosed,
+      pubIds: [...PUBS.diagnosed],
     },
     {
       id: 'l3',
-      name: 'Progressed / Refractory to 1L',
-      description: 'Progression on or after first-line therapy',
-      percentage: 82,
-      pubIds: pubOverrides.l3 ?? [],
+      name: 'Treated',
+      description: 'L4 · receiving IOP-lowering therapy',
+      percentage: r.treated,
+      pubIds: [...PUBS.treated],
     },
     {
       id: 'l4',
-      name: 'Progressed / Refractory to 2L',
-      description: 'Progression on or after second-line therapy',
-      percentage: 73,
-      pubIds: pubOverrides.l4 ?? [],
+      name: 'Uncontrolled / Advanced',
+      description: 'L4 · progressing or not at target IOP despite therapy',
+      percentage: r.uncontrolled,
+      pubIds: [...PUBS.uncontrolled],
     },
     {
       id: 'l5',
-      name: 'Progressed / Refractory to 3L',
-      description: 'Progression on or after third-line therapy',
-      percentage: 64,
-      pubIds: pubOverrides.l5 ?? [],
-    },
-    {
-      id: 'l6',
-      name: 'Heavily Pretreated (4L+ MM)',
-      description: 'Target population for Alnyx',
-      percentage: 52,
+      name: 'Surgical-Eligible (MIGS)',
+      description: 'L5 · candidates for minimally invasive glaucoma surgery — iStent infinite target',
+      percentage: r.surgical,
       isTarget: true,
-      pubIds: pubOverrides.l6 ?? [],
+      pubIds: [...PUBS.surgical],
     },
   ];
 }
 
-/** Apply a per-country override to the Diagnosed Prevalence (l1) %. */
-function withPrevalence(levels: FunnelLevel[], prevalencePct: number): FunnelLevel[] {
-  return levels.map(l => (l.id === 'l1' ? { ...l, percentage: prevalencePct } : l));
-}
-
 export const FUNNELS: Funnel[] = [
   {
-    id: 'us-4lmm',
-    name: '4L+ MM — United States',
+    id: 'us-oag',
+    name: 'OAG Surgical Funnel — United States',
     country: 'US',
     countryFullName: 'United States',
     ageGroup: 'Adults',
-    topLevelAbsolute: 258_300_000,
-    lastSaved: '2026-04-22',
-    levels: withPrevalence(
-      fourLMMLevels({
-        l1: ['Ailawadhi, 2024b'],
-        l6: ['Wang, 2022', 'Ahmed, 2023', 'Kumar, 2023'],
-      }),
-      0.062,
-    ),
+    topLevelAbsolute: 170_000_000,
+    lastSaved: '2026-05-30',
+    levels: glaucomaLevels({ prevalence: 2.3, diagnosed: 60, treated: 88, uncontrolled: 38, surgical: 38 }),
   },
   {
-    id: 'uk-4lmm',
-    name: '4L+ MM — United Kingdom',
+    id: 'uk-oag',
+    name: 'OAG Surgical Funnel — United Kingdom',
     country: 'UK',
     countryFullName: 'United Kingdom',
     ageGroup: 'Adults',
-    topLevelAbsolute: 53_100_000,
-    lastSaved: '2026-05-03',
-    levels: withPrevalence(fourLMMLevels(), 0.041),
+    topLevelAbsolute: 32_000_000,
+    lastSaved: '2026-05-28',
+    levels: glaucomaLevels({ prevalence: 2.0, diagnosed: 63, treated: 90, uncontrolled: 40, surgical: 35 }),
   },
   {
-    id: 'de-4lmm',
-    name: '4L+ MM — Germany',
+    id: 'de-oag',
+    name: 'OAG Surgical Funnel — Germany',
     country: 'DE',
     countryFullName: 'Germany',
     ageGroup: 'Adults',
-    topLevelAbsolute: 70_200_000,
-    lastSaved: '2026-05-08',
-    levels: withPrevalence(
-      fourLMMLevels({
-        l1: ['Sager, 2025'],
-      }),
-      0.043,
-    ),
+    topLevelAbsolute: 45_000_000,
+    lastSaved: '2026-05-26',
+    levels: glaucomaLevels({ prevalence: 1.9, diagnosed: 60, treated: 88, uncontrolled: 40, surgical: 36 }),
   },
   {
-    id: 'fr-4lmm',
-    name: '4L+ MM — France',
+    id: 'fr-oag',
+    name: 'OAG Surgical Funnel — France',
     country: 'FR',
     countryFullName: 'France',
     ageGroup: 'Adults',
-    topLevelAbsolute: 52_400_000,
-    lastSaved: '2026-04-30',
-    levels: withPrevalence(fourLMMLevels(), 0.046),
+    topLevelAbsolute: 33_000_000,
+    lastSaved: '2026-05-24',
+    levels: glaucomaLevels({ prevalence: 2.1, diagnosed: 58, treated: 86, uncontrolled: 42, surgical: 34 }),
   },
   {
-    id: 'jp-4lmm',
-    name: '4L+ MM — Japan',
+    id: 'jp-oag',
+    name: 'OAG Surgical Funnel — Japan',
     country: 'JP',
     countryFullName: 'Japan',
     ageGroup: 'Adults',
-    topLevelAbsolute: 104_500_000,
-    lastSaved: '2026-04-15',
-    levels: withPrevalence(fourLMMLevels(), 0.028),
+    topLevelAbsolute: 70_000_000,
+    lastSaved: '2026-05-22',
+    // Japan: notably higher OAG/NTG prevalence but a large undiagnosed fraction.
+    levels: glaucomaLevels({ prevalence: 3.9, diagnosed: 30, treated: 85, uncontrolled: 45, surgical: 32 }),
+  },
+  {
+    id: 'in-oag',
+    name: 'OAG Surgical Funnel — India',
+    country: 'IN',
+    countryFullName: 'India',
+    ageGroup: 'Adults',
+    topLevelAbsolute: 430_000_000,
+    lastSaved: '2026-05-20',
+    // India: very high undiagnosed fraction and lower treatment access.
+    levels: glaucomaLevels({ prevalence: 2.7, diagnosed: 25, treated: 70, uncontrolled: 50, surgical: 30 }),
   },
 ];
 
