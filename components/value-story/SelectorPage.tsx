@@ -7,7 +7,7 @@ import {
   LANDING_BANNER_OPENING,
   LANDING_SELECTOR_PROMPT,
 } from '@/lib/value-story/data';
-import AlnyxLogo from './AlnyxLogo';
+import ProductWordmark from './ProductWordmark';
 import { cn } from '@/lib/cn';
 
 interface Props {
@@ -55,7 +55,7 @@ export default function SelectorPage({
         >
           <X size={16} />
         </button>
-        <AlnyxLogo size={30} className="mb-3" />
+        <ProductWordmark size={30} className="mb-3" />
         <p className="text-sm leading-relaxed text-serif-foreground max-w-3xl">
           {LANDING_BANNER_OPENING}
         </p>

@@ -29,9 +29,9 @@ interface Props {
 
 // Domain-keyed accent colours for the message-ID square + headline.
 const DOMAIN_ACCENT: Record<DomainKey, { bg: string; fg: string }> = {
-  burden: { bg: '#F4A067', fg: '#FFFFFF' },
-  clinical: { bg: '#5DA4DE', fg: '#FFFFFF' },
-  patient: { bg: '#A98BD8', fg: '#FFFFFF' },
+  'unmet-need': { bg: '#F4A067', fg: '#FFFFFF' },
+  'platform-credibility': { bg: '#5DA4DE', fg: '#FFFFFF' },
+  'patient-value': { bg: '#A98BD8', fg: '#FFFFFF' },
   economic: { bg: '#5DCAA5', fg: '#FFFFFF' },
 };
 
@@ -145,9 +145,14 @@ function MessageCard({
         >
           {message.id}
         </span>
-        <p className="flex-1 text-sm leading-relaxed text-serif-foreground">
-          {message.text}
-        </p>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold leading-snug text-serif-foreground">
+            {message.headline}
+          </p>
+          <p className="mt-0.5 text-sm leading-relaxed text-serif-muted-foreground">
+            {message.text}
+          </p>
+        </div>
         <div className="hidden md:flex items-center shrink-0 pl-3">
           <StrengthIndicator level={message.strength} />
         </div>

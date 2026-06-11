@@ -99,7 +99,7 @@ export function getModuleCorpus(moduleKey: ModuleKey): string | null {
  * the model can mirror the **S7** citation format easily.
  */
 function buildScientificNarrativeCorpusText(): string {
-  const parts: string[] = ['# Alnyx Scientific Narrative Corpus — R/R MM', ''];
+  const parts: string[] = ['# iStent infinite Scientific Narrative Corpus — Open-Angle Glaucoma', ''];
 
   for (const pillar of PILLARS) {
     parts.push(`## Pillar ${pillar.number}: ${pillar.fullName}`);
@@ -339,7 +339,7 @@ function buildObjectionHandlingCorpusText(): string {
  * ID so the model can mirror the **C2** citation format easily.
  */
 function buildValueStoryCorpusText(): string {
-  const parts: string[] = ['# Alnyx (alphabetinib) Value Story — R/R MM', ''];
+  const parts: string[] = ['# iStent infinite Value Story — Open-Angle Glaucoma', ''];
   parts.push('## Overarching message');
   parts.push(OVERARCHING_MESSAGE);
   parts.push('');
@@ -349,7 +349,7 @@ function buildValueStoryCorpusText(): string {
     parts.push('');
     const messages = VALUE_MESSAGES.filter(m => m.domain === domain.key);
     for (const m of messages) {
-      parts.push(`- **${m.id}** (Strength: ${m.strength}): ${m.text}`);
+      parts.push(`- **${m.id}** (Strength: ${m.strength}) — ${m.headline}: ${m.text}`);
     }
     parts.push('');
   }

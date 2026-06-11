@@ -4,7 +4,9 @@ export interface ScientificStatement {
   id: string; // e.g., "S1", "S2"
   pillar: PillarKey;
   text: string;
-  /** Empty for now; populated by the end-of-cluster article-linking pass. */
+  /** Lead statement opens each pillar; the rest are support. */
+  role: 'lead' | 'support';
+  /** Empty for now; populated by the Phase 6 article-linking pass. */
   supporting_articles: string[];
   placeholder_publication_count: number;
 }
@@ -14,7 +16,7 @@ export interface PillarDef {
   /** Short name used on the Pillars page tiles. */
   name: string;
   /** Full name used in breadcrumbs and detail-page heading. Pillar 1
-   *  intentionally has no 'Alnyx –' prefix (it's the burden context). */
+   *  intentionally has no product prefix (it's the disease context). */
   fullName: string;
   /** Pillar number (1-4). */
   number: number;
@@ -27,63 +29,63 @@ export interface PillarDef {
   scientificPosition: string;
 }
 
-// 4 pillars
+// 4 pillars — iStent infinite scientific narrative.
 export const PILLARS: PillarDef[] = [
   {
     key: 'burden',
-    name: 'Burden & Unmet Need',
-    fullName: 'Burden & Unmet Need',
+    name: 'Disease & Unmet Need',
+    fullName: 'Disease & Unmet Need',
     number: 1,
-    monogram: 'B',
+    monogram: 'DU',
     gradient_class: 'bg-gradient-to-br from-orange-100 via-rose-50 to-rose-100',
     text_on_gradient_class: 'text-orange-700/15',
     banner_class: 'bg-gradient-to-br from-orange-50 via-rose-50 to-rose-100',
     strategicImperative:
-      'Highlight the impact of disease on patients and the dramatic consequences of relapsed/refractory multiple myeloma, and the unmet need that persists despite currently available treatments — the need for better outcomes for patients.',
+      'Establish the uncontrolled, surgical-eligible open-angle glaucoma population and the narrow corridor between failed therapy and invasive filtration or tube surgery.',
     scientificPosition:
-      'Despite advances in targeted therapy and immunotherapy, patients with triple-class-exposed (TCE) relapsed/refractory multiple myeloma continue to face poor prognoses due to emerging resistance and limited durable treatment options.',
+      'A defined open-angle glaucoma population stays uncontrolled despite maximum tolerated medical therapy and prior glaucoma surgery.',
   },
   {
     key: 'clinical-development',
-    name: 'Clinical Development',
-    fullName: 'Alnyx – Clinical Development',
+    name: 'Mechanism & Innovation',
+    fullName: 'iStent infinite – Mechanism & Innovation',
     number: 2,
-    monogram: 'CD',
+    monogram: 'MI',
     gradient_class: 'bg-gradient-to-br from-cyan-100 via-cyan-50 to-teal-50',
     text_on_gradient_class: 'text-cyan-700/15',
     banner_class: 'bg-gradient-to-br from-cyan-50 via-teal-50 to-cyan-100',
     strategicImperative:
-      'Provide a mechanistic and pre-clinical rationale for targeting BCMA × CD3 bispecific T-cell engagement in relapsed/refractory multiple myeloma, and convey the reasons for differential clinical response.',
+      'Convey how iStent infinite restores physiologic aqueous outflow as the first standalone micro-invasive implantable option in its indication.',
     scientificPosition:
-      'Alnyx was developed to address resistance-driven disease progression through high-affinity simultaneous engagement of BCMA on malignant plasma cells and CD3 on cytotoxic T cells.',
+      'iStent infinite restores physiologic aqueous outflow via three trabecular micro-bypass stents, implanted standalone.',
   },
   {
     key: 'efficacy',
-    name: 'Efficacy',
-    fullName: 'Alnyx – Efficacy',
+    name: 'Clinical Efficacy',
+    fullName: 'iStent infinite – Clinical Efficacy',
     number: 3,
-    monogram: 'E',
+    monogram: 'CE',
     gradient_class: 'bg-gradient-to-br from-emerald-100 via-emerald-50 to-green-50',
     text_on_gradient_class: 'text-emerald-700/15',
     banner_class: 'bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-100',
     strategicImperative:
-      'Summarise the safety and efficacy of alphabetinib demonstrated in the pivotal Phase 2 trial in R/R Multiple Myeloma, convey the magnitude of clinical effect, holistic benefits, and manageable safety and tolerability profile.',
+      'Summarise the magnitude and durability of intraocular pressure reduction in a failed-prior-therapy population, as demonstrated in the pivotal trial.',
     scientificPosition:
-      'Clinical trials have demonstrated that alphabetinib delivers meaningful, durable responses and improved outcomes in triple-class-exposed R/R Multiple Myeloma, with a well-characterised and manageable safety profile.',
+      'Approximately 76% of a failed-prior-therapy open-angle glaucoma population met the responder endpoint at 12 months.',
   },
   {
     key: 'patient-impact',
-    name: 'Patient Impact',
-    fullName: 'Alnyx – Patient Impact',
+    name: 'Safety & Procedural Profile',
+    fullName: 'iStent infinite – Safety & Procedural Profile',
     number: 4,
-    monogram: 'PI',
+    monogram: 'SP',
     gradient_class: 'bg-gradient-to-br from-purple-100 via-violet-50 to-fuchsia-50',
     text_on_gradient_class: 'text-purple-700/15',
     banner_class: 'bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100',
     strategicImperative:
-      'Provide a rationale for incorporating Alnyx into clinical practice as a new treatment paradigm to improve patient outcomes in R/R Multiple Myeloma.',
+      'Convey the favourable safety profile and the procedural advantages of an angle-based, options-preserving approach within a stepwise interventional pathway.',
     scientificPosition:
-      'By overcoming therapeutic resistance and achieving durable disease control, alphabetinib has the potential to transform patient outcomes and redefine standard care in triple-class-exposed R/R Multiple Myeloma.',
+      'Favourable safety: no explants, infection, device-related interventions, or hypotony in the pivotal trial.',
   },
 ];
 
@@ -91,113 +93,72 @@ export const PILLAR_BY_KEY: Record<PillarKey, PillarDef> = Object.fromEntries(
   PILLARS.map(p => [p.key, p]),
 ) as Record<PillarKey, PillarDef>;
 
-// 14 statements clustered by pillar:
-//   S1-S3 burden, S4-S6 clinical-development, S7-S10 efficacy, S11-S14 patient-impact
+// 14 statements clustered by pillar (S1/S4/S7/S11 = lead):
+//   S1-S3 Disease & Unmet Need, S4-S6 Mechanism & Innovation,
+//   S7-S10 Clinical Efficacy, S11-S14 Safety & Procedural Profile
 export const SCIENTIFIC_STATEMENTS: ScientificStatement[] = [
-  // Pillar 1: Burden & Unmet Need
+  // Pillar 1 — Disease & Unmet Need
   {
-    id: 'S1',
-    pillar: 'burden',
-    placeholder_publication_count: 3,
-    supporting_articles: [],
-    text: 'Patients with advanced multiple myeloma often relapse after multiple lines of targeted therapy, facing limited effective options and declining quality of life.',
+    id: 'S1', pillar: 'burden', role: 'lead', placeholder_publication_count: 3, supporting_articles: [],
+    text: 'A defined open-angle glaucoma population stays uncontrolled despite maximum tolerated medical therapy and prior glaucoma surgery.',
   },
   {
-    id: 'S2',
-    pillar: 'burden',
-    placeholder_publication_count: 3,
-    supporting_articles: [],
-    text: 'Advanced multiple myeloma remains a devastating malignancy with poor long-term survival once resistance to current regimens develops.',
+    id: 'S2', pillar: 'burden', role: 'support', placeholder_publication_count: 2, supporting_articles: [],
+    text: 'For these patients, the corridor between failed therapy and invasive filtration/tube surgery has historically been narrow.',
   },
   {
-    id: 'S3',
-    pillar: 'burden',
-    placeholder_publication_count: 3,
-    supporting_articles: [],
-    text: 'There is a critical need for therapies capable of overcoming resistance, restoring durable disease control, and extending survival.',
+    id: 'S3', pillar: 'burden', role: 'support', placeholder_publication_count: 3, supporting_articles: [],
+    text: 'Persistent elevated intraocular pressure drives ongoing, irreversible optic nerve damage — durable IOP control is the central goal.',
   },
 
-  // Pillar 2: Clinical Development
+  // Pillar 2 — Mechanism & Innovation
   {
-    id: 'S4',
-    pillar: 'clinical-development',
-    placeholder_publication_count: 3,
-    supporting_articles: [],
-    text: "Alnyx is a next-generation bispecific antibody engineered to simultaneously bind BCMA on multiple myeloma cells and CD3 on T cells, redirecting the patient's own immune response to the tumour.",
+    id: 'S4', pillar: 'clinical-development', role: 'lead', placeholder_publication_count: 2, supporting_articles: [],
+    text: 'iStent infinite restores physiologic aqueous outflow via three trabecular micro-bypass stents, implanted standalone.',
   },
   {
-    id: 'S5',
-    pillar: 'clinical-development',
-    placeholder_publication_count: 3,
-    supporting_articles: [],
-    text: 'Bispecific T-cell engagement bypasses the dependence on prior treatment classes (PIs, IMiDs, anti-CD38 mAbs), inducing apoptosis in tumour cells harbouring resistance mutations to those classes.',
+    id: 'S5', pillar: 'clinical-development', role: 'support', placeholder_publication_count: 2, supporting_articles: [],
+    text: "Stents create multiple arcs of outflow across Schlemm's canal while occupying a minimal fraction of it, preserving natural anatomy.",
   },
   {
-    id: 'S6',
-    pillar: 'clinical-development',
-    placeholder_publication_count: 3,
-    supporting_articles: [],
-    text: 'The unique mechanism differs from CAR-T (which requires manufacturing and lymphodepletion) and from ADCs (which target a single antigen without immune redirection), offering the potential for profound, prolonged, and meaningful impact on outcomes.',
+    id: 'S6', pillar: 'clinical-development', role: 'support', placeholder_publication_count: 2, supporting_articles: [],
+    text: 'First standalone micro-invasive implantable option in its indication — extends interventional glaucoma to later-stage, refractory disease.',
   },
 
-  // Pillar 3: Efficacy
+  // Pillar 3 — Clinical Efficacy
   {
-    id: 'S7',
-    pillar: 'efficacy',
-    placeholder_publication_count: 4,
-    supporting_articles: [],
-    text: 'In the pivotal RESCUE-MM Phase 2 trial, alphabetinib achieved an overall response rate of 78.5% (95% CI: 71.2–84.6%) in heavily pre-treated TCE R/R MM patients.',
+    id: 'S7', pillar: 'efficacy', role: 'lead', placeholder_publication_count: 2, supporting_articles: [],
+    text: 'Approximately 76% of a failed-prior-therapy open-angle glaucoma population met the responder endpoint at 12 months.',
   },
   {
-    id: 'S8',
-    pillar: 'efficacy',
-    placeholder_publication_count: 4,
-    supporting_articles: [],
-    text: 'RESCUE-MM showed deep and durable responses, with median progression-free survival of 12.4 months and duration of response of 16.2 months at the time of analysis.',
+    id: 'S8', pillar: 'efficacy', role: 'support', placeholder_publication_count: 2, supporting_articles: [],
+    text: 'Mean diurnal intraocular pressure fell 5.9 mmHg from a medicated baseline of ~23.4 mmHg at month 12.',
   },
   {
-    id: 'S9',
-    pillar: 'efficacy',
-    placeholder_publication_count: 3,
-    supporting_articles: [],
-    text: 'Clinical benefit was observed across subgroups, including patients with high-risk cytogenetics, extramedullary disease, and prior exposure to BCMA-directed therapies.',
+    id: 'S9', pillar: 'efficacy', role: 'support', placeholder_publication_count: 1, supporting_articles: [],
+    text: 'Responses were achieved on the same or fewer intraocular-pressure-lowering medication classes.',
   },
   {
-    id: 'S10',
-    pillar: 'efficacy',
-    placeholder_publication_count: 3,
-    supporting_articles: [],
-    text: 'Alnyx demonstrated a predictable, manageable safety profile with primarily low-grade cytokine release syndrome (85% Grade 1/2) resolving with standard intervention.',
+    id: 'S10', pillar: 'efficacy', role: 'support', placeholder_publication_count: 2, supporting_articles: [],
+    text: '53% achieved a ≥30% intraocular pressure reduction without additional surgical intervention.',
   },
 
-  // Pillar 4: Patient Impact
+  // Pillar 4 — Safety & Procedural Profile
   {
-    id: 'S11',
-    pillar: 'patient-impact',
-    placeholder_publication_count: 3,
-    supporting_articles: [],
-    text: 'Alnyx offers a new treatment horizon for patients who have exhausted existing targeted therapies and immunotherapy classes.',
+    id: 'S11', pillar: 'patient-impact', role: 'lead', placeholder_publication_count: 2, supporting_articles: [],
+    text: 'Favourable safety: no explants, infection, device-related interventions, or hypotony in the pivotal trial.',
   },
   {
-    id: 'S12',
-    pillar: 'patient-impact',
-    placeholder_publication_count: 3,
-    supporting_articles: [],
-    text: 'Bispecific BCMA × CD3 engagement provides renewed disease control and the potential for improved quality of life through deep, durable responses.',
+    id: 'S12', pillar: 'patient-impact', role: 'support', placeholder_publication_count: 2, supporting_articles: [],
+    text: 'A micro-invasive, angle-based approach minimises tissue disruption versus filtration or tube surgery.',
   },
   {
-    id: 'S13',
-    pillar: 'patient-impact',
-    placeholder_publication_count: 3,
-    supporting_articles: [],
-    text: 'Clinicians can integrate Alnyx confidently, given its robust efficacy and tolerability observed in the pivotal Phase 2 study, with Phase 3 confirmation pending.',
+    id: 'S13', pillar: 'patient-impact', role: 'support', placeholder_publication_count: 1, supporting_articles: [],
+    text: 'Standalone implantation preserves future surgical options — supporting a stepwise interventional pathway.',
   },
   {
-    id: 'S14',
-    pillar: 'patient-impact',
-    placeholder_publication_count: 3,
-    supporting_articles: [],
-    text: 'By addressing resistance-driven progression in the TCE setting, Alnyx has the potential to redefine long-term outcomes in this aggressive malignancy.',
+    id: 'S14', pillar: 'patient-impact', role: 'support', placeholder_publication_count: 2, supporting_articles: [],
+    text: 'Backed by a two-decade iStent evidence legacy across the trabecular micro-bypass platform.',
   },
 ];
 
@@ -218,6 +179,6 @@ export const STATEMENT_BY_ID: Record<string, ScientificStatement> = Object.fromE
 );
 
 // Module-level branding
-export const MODULE_TITLE = 'Alnyx — Scientific Communication Platform';
+export const MODULE_TITLE = 'iStent infinite — Scientific Communication Platform';
 export const MODULE_DESCRIPTION =
-  "Explore Alnyx's core narrative, objectives, scientific position, medical messages and supportive evidence for its use in relapsed/refractory multiple myeloma.";
+  "Explore iStent infinite's core narrative, scientific position, and supporting evidence for standalone use in adults with open-angle glaucoma uncontrolled by prior medical and surgical therapy.";

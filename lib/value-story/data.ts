@@ -14,14 +14,36 @@ export const STRENGTH_LABEL: Record<StrengthLevel, string> = {
   robust: 'Robust',
 };
 
-export type DomainKey = 'burden' | 'clinical' | 'patient' | 'economic';
+// Domains: Unmet Need → Platform Credibility → Patient Value → Economic (U/P/V/E).
+export type DomainKey = 'unmet-need' | 'platform-credibility' | 'patient-value' | 'economic';
+
+/**
+ * Source reference attached to a value message for Phase 6 citation
+ * deep-linking. `pubmed` refs carry a PMID/DOI (and, where the article is in
+ * the canonical Library, an `articleId` so the chip can deep-link to the
+ * Library row); `glaukos` refs are company-reported; `inferential` refs flag
+ * claims without direct trial/economic evidence.
+ */
+export interface SourceRef {
+  label: string;
+  type: 'pubmed' | 'glaukos' | 'inferential';
+  pmid?: string;
+  doi?: string;
+  /** Canonical Library Article id, when the source is in the Library. */
+  articleId?: string;
+}
 
 export interface ValueMessage {
-  id: string; // e.g., "D1", "C2"
+  id: string; // e.g., "U1", "V2"
   domain: DomainKey;
+  /** Short headline shown in bold on the message card. */
+  headline: string;
+  /** Substantiation — the supporting claim under the headline. */
   text: string;
   strength: StrengthLevel;
-  /** Placeholder count shown until the end-of-cluster article linking pass. */
+  /** Source references for Phase 6 citation deep-linking. */
+  sourceRefs: SourceRef[];
+  /** Placeholder count shown until the Phase 6 article linking pass. */
   placeholder_publication_count: number;
   /** Empty for now; populated with Library Article IDs at the linking pass. */
   supporting_articles: string[];
@@ -39,34 +61,43 @@ export interface DomainDef {
   overarching: string;
 }
 
-// 4 domains
+// Pivotal-trial reference, reused across efficacy/safety messages.
+const SARKISIAN: SourceRef = {
+  label: 'Sarkisian et al., J Glaucoma 2023 (PMID 36260288)',
+  type: 'pubmed',
+  pmid: '36260288',
+  doi: '10.1097/IJG.0000000000002141',
+  articleId: 'Sarkisian, 2022',
+};
+
+// 4 domains (U/P/V/E order)
 export const DOMAINS: DomainDef[] = [
   {
-    key: 'burden',
-    name: 'Burden & Unmet Need',
-    monogram: 'D',
+    key: 'unmet-need',
+    name: 'Unmet Need',
+    monogram: 'U',
     gradient_class: 'bg-gradient-to-br from-orange-100 via-orange-50 to-red-50',
     text_on_gradient_class: 'text-orange-700/15',
     overarching:
-      'R/RMM worsens survival and quality of life due to symptom burden and treatment toxicities. Existing therapies have efficacy and access limitations, highlighting the need for better options.',
+      'Refractory open-angle glaucoma persists after maximum tolerated medical therapy and prior surgery, with few standalone options before invasive filtration or tube surgery — and continued elevated intraocular pressure risks progressive, irreversible vision loss.',
   },
   {
-    key: 'clinical',
-    name: 'Clinical Value',
-    monogram: 'C',
+    key: 'platform-credibility',
+    name: 'Platform Credibility',
+    monogram: 'P',
     gradient_class: 'bg-gradient-to-br from-blue-100 via-blue-50 to-sky-50',
     text_on_gradient_class: 'text-blue-700/15',
     overarching:
-      'Alnyx offers deep, durable responses in relapsed and refractory multiple myeloma, improving symptoms, pain, and overall well-being. With a predictable, manageable safety profile, it provides a well-tolerated, effective option for patients.',
+      'iStent infinite is built on the iStent trabecular micro-bypass franchise — a roughly two-decade evidence legacy from the company that established interventional glaucoma (Glaukos company-reported).',
   },
   {
-    key: 'patient',
-    name: 'Patient Impact',
-    monogram: 'P',
+    key: 'patient-value',
+    name: 'Patient Value',
+    monogram: 'V',
     gradient_class: 'bg-gradient-to-br from-purple-100 via-purple-50 to-fuchsia-50',
     text_on_gradient_class: 'text-purple-700/15',
     overarching:
-      "Alnyx outperforms physician's choice with higher response rates, longer survival, and improved progression-free outcomes. Its convenient, ready-to-use subcutaneous administration enables faster treatment initiation, offering a more accessible and efficient option compared to existing therapies requiring prolonged preparation and monitoring.",
+      'In a failed-prior-therapy population, iStent infinite delivered meaningful intraocular pressure reduction on the same or fewer medications, with a favourable safety profile that preserves future surgical options.',
   },
   {
     key: 'economic',
@@ -75,162 +106,101 @@ export const DOMAINS: DomainDef[] = [
     gradient_class: 'bg-gradient-to-br from-emerald-100 via-emerald-50 to-green-50',
     text_on_gradient_class: 'text-emerald-700/15',
     overarching:
-      'Alnyx offers a cost-effective treatment for relapsed and refractory multiple myeloma, reducing overall healthcare costs by displacing expensive later-line therapies and complications. Its optimised use with non-invasive testing further minimises budget impact, delivering significant economic value in reimbursement models.',
+      'By deferring more invasive, higher-complication surgery and easing the chronic medication load, iStent infinite has the potential to reduce downstream resource use — inferential, pending direct economic evidence.',
   },
 ];
 
-// 18 value messages
+// 13 value messages: U1-U3, P1-P2, V1-V5, E1-E3
 export const VALUE_MESSAGES: ValueMessage[] = [
-  // Burden & Unmet Need (5)
+  // 1 · Unmet Need
   {
-    id: 'D1',
-    domain: 'burden',
-    strength: 'robust',
-    placeholder_publication_count: 3,
-    text: 'Multiple myeloma (MM) is a plasma cell malignancy with an incidence of 5.3 per 100,000 globally, accounting for ~10% of hematologic malignancies.',
-    supporting_articles: [],
+    id: 'U1', domain: 'unmet-need', strength: 'strong', placeholder_publication_count: 1, supporting_articles: [],
+    headline: 'Where the options run out',
+    text: 'Refractory open-angle glaucoma persists after medications and surgery, with few standalone alternatives before invasive surgery.',
+    sourceRefs: [{ label: 'iStent infinite indication & MIGS landscape (Glaukos)', type: 'glaukos' }],
   },
   {
-    id: 'D2',
-    domain: 'burden',
-    strength: 'robust',
-    placeholder_publication_count: 3,
-    text: 'Current standard of care options provide suboptimal efficacy and tolerability, substantial delay in onset of action, as well as limited HRQoL benefits.',
-    supporting_articles: [],
+    id: 'U2', domain: 'unmet-need', strength: 'robust', placeholder_publication_count: 2, supporting_articles: [],
+    headline: 'Uncontrolled pressure, irreversible loss',
+    text: 'Continued elevated intraocular pressure risks progressive, irreversible vision loss.',
+    sourceRefs: [
+      { label: 'King et al., Ophthalmology 2024 (TAGS)', type: 'pubmed', pmid: '38199528', articleId: 'King, 2024' },
+      { label: 'Shin et al., Sci Rep 2024', type: 'pubmed', pmid: '38177211', articleId: 'Shin, 2024' },
+    ],
   },
   {
-    id: 'D3',
-    domain: 'burden',
-    strength: 'strong',
-    placeholder_publication_count: 3,
-    text: 'Many patients fail to achieve remission with existing therapies which can result in treatment resistance and is associated with a significant increase in humanistic burden, morbidity and costs.',
-    supporting_articles: [],
-  },
-  {
-    id: 'D4',
-    domain: 'burden',
-    strength: 'emerging',
-    placeholder_publication_count: 3,
-    text: 'Exposure or refractoriness to prior classes of therapy is the key driver of unmet need in MM, with patients experiencing substantial and often debilitating disease burden.',
-    supporting_articles: [],
-  },
-  {
-    id: 'D5',
-    domain: 'burden',
-    strength: 'aspirational',
-    placeholder_publication_count: 3,
-    text: 'In many cases, relapsed/refractory MM patients must resort to recycling therapies, leaving unmet need for additional safe and efficacious treatments.',
-    supporting_articles: [],
+    id: 'U3', domain: 'unmet-need', strength: 'strong', placeholder_publication_count: 1, supporting_articles: [],
+    headline: 'A clearly defined patient',
+    text: 'The failed-prior-therapy population maps directly to the surgical-eligible funnel tier.',
+    sourceRefs: [{ label: 'Surgical-eligible funnel tier (Glaukos)', type: 'glaukos' }],
   },
 
-  // Clinical Value (5)
+  // 2 · Platform Credibility
   {
-    id: 'C1',
-    domain: 'clinical',
-    strength: 'robust',
-    placeholder_publication_count: 3,
-    text: 'Alnyx is indicated for the treatment of adult patients with relapsed and refractory multiple myeloma, who have received at least two prior therapies, and have demonstrated disease progression on the last therapy.',
-    supporting_articles: [],
+    id: 'P1', domain: 'platform-credibility', strength: 'robust', placeholder_publication_count: 1, supporting_articles: [],
+    headline: 'Two decades of evidence',
+    text: 'A roughly 20-year iStent legacy, 300+ publications, and 3M+ devices implanted (Glaukos-reported).',
+    sourceRefs: [{ label: 'iStent platform legacy (Glaukos, company-reported)', type: 'glaukos' }],
   },
   {
-    id: 'C2',
-    domain: 'clinical',
-    strength: 'robust',
-    placeholder_publication_count: 3,
-    text: 'In R/R MM patients who have no prior targeted therapy exposure, Alnyx provides patients with a deep and durable response, with majority had ongoing responses at 16 months.',
-    supporting_articles: [],
-  },
-  {
-    id: 'C3',
-    domain: 'clinical',
-    strength: 'strong',
-    placeholder_publication_count: 3,
-    text: 'Patients treated with Alnyx reported significant reductions in pain and multiple myeloma disease symptoms based on the disease-specific and general patient reported outcomes tools.',
-    supporting_articles: [],
-  },
-  {
-    id: 'C4',
-    domain: 'clinical',
-    strength: 'emerging',
-    placeholder_publication_count: 3,
-    text: 'Patients treated with Alnyx reported rapid improvements in their overall disease state, demonstrated by favourable patient global impression of change outcomes.',
-    supporting_articles: [],
-  },
-  {
-    id: 'C5',
-    domain: 'clinical',
-    strength: 'aspirational',
-    placeholder_publication_count: 3,
-    text: "Alnyx's safety profile was predictable, key immuno- and neuro- safety events were mostly low grade (85% grade 1/2) and manageable with appropriate intervention; majority (91%) occurring with early onset.",
-    supporting_articles: [],
+    id: 'P2', domain: 'platform-credibility', strength: 'strong', placeholder_publication_count: 1, supporting_articles: [],
+    headline: 'Built by the pioneers of MIGS',
+    text: 'Glaukos established interventional glaucoma and extends it to standalone, later-stage care.',
+    sourceRefs: [{ label: 'Glaukos — pioneers of MIGS (company-reported)', type: 'glaukos' }],
   },
 
-  // Patient Impact (4)
+  // 3 · Patient Value (Clinical + Humanistic)
   {
-    id: 'P1',
-    domain: 'patient',
-    strength: 'robust',
-    placeholder_publication_count: 3,
-    text: "Alnyx was associated with significantly higher overall response rate than physician's choice based on a real-world external control arm study.",
-    supporting_articles: [],
+    id: 'V1', domain: 'patient-value', strength: 'strong', placeholder_publication_count: 1, supporting_articles: [],
+    headline: "Meaningful reduction where it's hardest",
+    text: '~5.9 mmHg mean diurnal IOP reduction at month 12 in a failed-prior-therapy population.',
+    sourceRefs: [SARKISIAN],
   },
   {
-    id: 'P2',
-    domain: 'patient',
-    strength: 'strong',
-    placeholder_publication_count: 3,
-    text: "Alnyx was associated with significantly longer progression-free survival and overall survival than physician's choice based on two real-world external control arm studies.",
-    supporting_articles: [],
+    id: 'V2', domain: 'patient-value', strength: 'strong', placeholder_publication_count: 1, supporting_articles: [],
+    headline: 'Three in four respond',
+    text: '~76% met the responder endpoint at 12 months.',
+    sourceRefs: [SARKISIAN],
   },
   {
-    id: 'P3',
-    domain: 'patient',
-    strength: 'emerging',
-    placeholder_publication_count: 3,
-    text: 'Alnyx offers a more convenient administration than currently available treatments and easier treatment initiation, administered subcutaneously by HCPs.',
-    supporting_articles: [],
+    id: 'V3', domain: 'patient-value', strength: 'strong', placeholder_publication_count: 1, supporting_articles: [],
+    headline: 'Control without adding burden',
+    text: 'Achieved on the same or fewer intraocular-pressure-lowering medication classes.',
+    sourceRefs: [SARKISIAN],
   },
   {
-    id: 'P4',
-    domain: 'patient',
-    strength: 'aspirational',
-    placeholder_publication_count: 3,
-    text: 'Alnyx is ready to be administered as soon as it is prescribed, as opposed to other available therapies, which require 1-2 months of preparation and extended monitoring.',
-    supporting_articles: [],
+    id: 'V4', domain: 'patient-value', strength: 'emerging', placeholder_publication_count: 1, supporting_articles: [],
+    headline: 'Fewer drops, simpler days',
+    text: 'Potential to ease chronic drop/adherence burden and support quality of life.',
+    sourceRefs: [{ label: 'Illustrative, case-level — not a trial endpoint', type: 'inferential' }],
+  },
+  {
+    id: 'V5', domain: 'patient-value', strength: 'strong', placeholder_publication_count: 1, supporting_articles: [],
+    headline: 'A safety profile that holds up',
+    text: 'No explants, infection, device-related interventions, or hypotony — while preserving future options.',
+    sourceRefs: [SARKISIAN],
   },
 
-  // Economic Value (4)
+  // 4 · Economic Value
   {
-    id: 'E1',
-    domain: 'economic',
-    strength: 'robust',
-    placeholder_publication_count: 3,
-    text: 'Alnyx delays disease progression, which has been shown to yield reductions in downstream management costs in R/R MM.',
-    supporting_articles: [],
+    id: 'E1', domain: 'economic', strength: 'emerging', placeholder_publication_count: 1, supporting_articles: [],
+    headline: 'Deferring the costlier path',
+    text: 'Potential to delay or avoid more invasive, higher-complication filtration/tube surgery.',
+    sourceRefs: [{ label: 'Inferential — no direct economic evidence in the pivotal trial', type: 'inferential' }],
   },
   {
-    id: 'E2',
-    domain: 'economic',
-    strength: 'strong',
-    placeholder_publication_count: 3,
-    text: 'With the displacement of later-line medicines and subsequent severe complications, reimbursement for Alnyx can yield significant cost offsets.',
-    supporting_articles: [],
+    id: 'E2', domain: 'economic', strength: 'emerging', placeholder_publication_count: 1, supporting_articles: [],
+    headline: 'Lightening the medication load',
+    text: 'Same or fewer medication classes may reduce ongoing pharmacy burden.',
+    sourceRefs: [
+      { label: 'Newman-Casey et al., Ophthalmology 2020 (adherence cost-utility)', type: 'pubmed', pmid: '31767436', articleId: 'Newman-Casey, 2019' },
+    ],
   },
   {
-    id: 'E3',
-    domain: 'economic',
-    strength: 'emerging',
-    placeholder_publication_count: 3,
-    text: 'Alnyx has a manageable budget impact, with cost-saving potential versus alternative regimens.',
-    supporting_articles: [],
-  },
-  {
-    id: 'E4',
-    domain: 'economic',
-    strength: 'aspirational',
-    placeholder_publication_count: 3,
-    text: 'Alnyx is easier for pharmacists to manage due to the non-weight-based dosing, and as such has lower HCP utilisation and wastage.',
-    supporting_articles: [],
+    id: 'E3', domain: 'economic', strength: 'aspirational', placeholder_publication_count: 1, supporting_articles: [],
+    headline: 'Fewer complications downstream',
+    text: 'Favourable safety may translate to reduced complication-related resource use.',
+    sourceRefs: [{ label: 'Inferential — no direct economic evidence', type: 'inferential' }],
   },
 ];
 
@@ -246,28 +216,28 @@ export interface PayerIssueOption {
 
 export const INDICATION_OPTIONS: IndicationOption[] = [
   { id: 'cross', label: 'Cross-indication' },
-  { id: '3l-plus-rrmm', label: '3L+ relapsed / refractory multiple myeloma' },
-  { id: 'alk-ros1-nsclc', label: 'Refractory ALK+/ROS1+ NSCLC' },
+  { id: 'oag-surgical', label: 'Open-angle glaucoma — surgical-eligible' },
+  { id: 'oag-uncontrolled', label: 'Uncontrolled OAG on maximum medical therapy' },
 ];
 
 export const PAYER_ISSUE_OPTIONS: PayerIssueOption[] = [
   { id: 'overarching', label: 'Overarching value story' },
   { id: 'budget', label: 'Budget sensitive' },
-  { id: 'generic-entry', label: 'Generic competitor entry' },
-  { id: 'differentiation', label: 'Differentiation vs branded competitors' },
-  { id: 'formulary', label: 'Formulary positioning' },
-  { id: 'durability', label: 'Durability of response' },
+  { id: 'unmet-need', label: 'Unmet need / positioning' },
+  { id: 'differentiation', label: 'Differentiation vs alternatives' },
+  { id: 'formulary', label: 'Coverage / pathway positioning' },
+  { id: 'durability', label: 'Durability of IOP control' },
 ];
 
 // Banner content
 export const LANDING_BANNER_OPENING =
-  'A breakthrough in the treatment of advanced relapsed / refractory multiple myeloma, with proven efficacy in targeting and reducing disease progression. Alnyx empowers patients and healthcare providers with an innovative therapy that prioritises both survival and quality of life.';
+  'iStent infinite is a standalone, micro-invasive trabecular micro-bypass option for adults with open-angle glaucoma uncontrolled by prior medical and surgical therapy — restoring physiologic aqueous outflow to deliver durable intraocular pressure control.';
 
 export const LANDING_SELECTOR_PROMPT =
-  'Select tailored PVPs for emphasis and more comprehensive data on messages to support pressing issues';
+  'Select tailored value messages for emphasis and more comprehensive data on the messages that support pressing payer issues.';
 
 export const OVERARCHING_MESSAGE =
-  'Alnyx (alphabetinib) represents a breakthrough in the treatment of relapsed and refractory multiple myeloma, offering renewed hope for patients who have exhausted other options. With proven efficacy in targeting and reducing disease progression, Alnyx empowers patients and healthcare providers with an innovative therapy that prioritises both survival and quality of life.';
+  'iStent infinite extends interventional glaucoma to later-stage, refractory disease: a standalone micro-invasive implant that lowers intraocular pressure on the same or fewer medications, with a favourable safety profile that preserves future surgical options.';
 
 // Helpers
 export function getMessagesForDomain(domain: DomainKey): ValueMessage[] {

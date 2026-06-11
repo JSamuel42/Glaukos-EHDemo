@@ -43,6 +43,11 @@ export default function StatementCard({ statement }: Props) {
           {statement.id}
         </span>
         <span className="flex-1 text-sm text-serif-foreground leading-relaxed">
+          {statement.role === 'lead' && (
+            <span className="mr-2 inline-flex items-center rounded-full bg-slate-800 px-2 py-0.5 align-middle text-[9px] font-mono font-semibold uppercase tracking-wider text-white">
+              Lead
+            </span>
+          )}
           {statement.text}
         </span>
         <span className="shrink-0 text-serif-muted-foreground mt-0.5">
