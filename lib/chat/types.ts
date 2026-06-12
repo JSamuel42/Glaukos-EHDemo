@@ -29,4 +29,11 @@ export interface ChatRequestBody {
   isSuggestedQuestion?: boolean;
   /** The module key the user was in at the time of the previous message (for context-shift acknowledgement). */
   previousModuleKey?: ModuleKey;
+  /**
+   * Live module context (Phase 6) — a short string describing the page's
+   * current active state (e.g. active dossier + selected section, or the
+   * active epidemiology funnel + tiers). Injected into the system prompt so
+   * the chat is grounded in what the user is looking at.
+   */
+  moduleContext?: string;
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink } from 'lucide-react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import type { Article } from '@/lib/library/data';
@@ -129,20 +130,23 @@ function LinkPillCell({ value }: { value: string | null }) {
 }
 
 /** Renders a dossier cell: the article's linked section numbers as mono
- *  pills, or an em-dash when the article isn't linked in that dossier. */
-function DossierSectionCell({ numbers }: { numbers: string[] }) {
+ *  pills, or an em-dash when the article isn't linked in that dossier. Each
+ *  pill deep-links to that dossier's section (?section=<number>). */
+function DossierSectionCell({ numbers, dossierId }: { numbers: string[]; dossierId: string }) {
   if (!numbers || numbers.length === 0) {
     return <span className="text-serif-muted-foreground">—</span>;
   }
   return (
     <div className="flex flex-wrap gap-1">
       {numbers.map((n) => (
-        <span
+        <Link
           key={n}
-          className="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-[rgba(8,56,96,0.08)] text-[color:var(--evhub-navy)]"
+          href={`/dossier-builder/${dossierId}?section=${encodeURIComponent(n)}`}
+          title={`Open section ${n} in this dossier`}
+          className="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-[rgba(8,56,96,0.08)] text-[color:var(--evhub-navy)] hover:bg-[rgba(8,56,96,0.16)] transition-colors"
         >
           {n}
-        </span>
+        </Link>
       ))}
     </div>
   );
@@ -471,7 +475,7 @@ export default function LibraryTable({
                   </td>
                   {dossierColumns.map((col) => (
                     <td key={col.id} className={cellBase} style={{ width: 110 }}>
-                      <DossierSectionCell numbers={dossierSectionLookup[col.id]?.[a.id] ?? []} />
+                      <DossierSectionCell numbers={dossierSectionLookup[col.id]?.[a.id] ?? []} dossierId={col.id} />
                     </td>
                   ))}
                 </tr>

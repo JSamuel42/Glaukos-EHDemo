@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import {
   ArrowLeft,
   ChevronDown,
@@ -16,7 +17,9 @@ import {
   totalPublicationsForDomain,
   type DomainKey,
   type ValueMessage,
+  type SourceRef,
 } from '@/lib/value-story/data';
+import { resolveArticle } from '@/lib/dossier/store';
 import StrengthIndicator from '@/components/shared/StrengthIndicator';
 import { SupportingArticles } from '@/components/citations/SupportingArticles';
 import { cn } from '@/lib/cn';
@@ -180,9 +183,78 @@ function MessageCard({
             messageId={message.id}
             placeholderCount={message.placeholder_publication_count}
           />
+
+          {message.sourceRefs.length > 0 && (
+            <SourceRefChips refs={message.sourceRefs} />
+          )}
         </div>
       )}
     </article>
+  );
+}
+
+/**
+ * Phase 6 — render a message's source references as deep-link chips. Library
+ * sources link in-app to the Library row; PubMed/DOI refs open externally;
+ * Glaukos / inferential refs render as muted, non-clickable pills.
+ */
+function SourceRefChips({ refs }: { refs: SourceRef[] }) {
+  const chipBase =
+    'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] leading-tight border transition-colors';
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+      <span className="text-[10px] uppercase tracking-[0.18em] font-mono font-semibold text-serif-muted-foreground mr-1">
+        Source
+      </span>
+      {refs.map((ref, i) => {
+        const inLibrary = ref.articleId ? resolveArticle(ref.articleId) : undefined;
+        if (ref.articleId && inLibrary) {
+          return (
+            <Link
+              key={i}
+              href={`/library?article=${encodeURIComponent(ref.articleId)}`}
+              className={cn(chipBase, 'border-serif-border text-[color:var(--evhub-navy)] bg-[rgba(8,56,96,0.06)] hover:bg-[rgba(8,56,96,0.12)]')}
+            >
+              {ref.label}
+            </Link>
+          );
+        }
+        if (ref.pmid) {
+          return (
+            <a
+              key={i}
+              href={`https://pubmed.ncbi.nlm.nih.gov/${ref.pmid}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(chipBase, 'border-serif-border text-[color:var(--evhub-navy)] bg-[rgba(8,56,96,0.06)] hover:bg-[rgba(8,56,96,0.12)]')}
+            >
+              {ref.label}
+            </a>
+          );
+        }
+        if (ref.doi) {
+          return (
+            <a
+              key={i}
+              href={`https://doi.org/${ref.doi}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(chipBase, 'border-serif-border text-[color:var(--evhub-navy)] bg-[rgba(8,56,96,0.06)] hover:bg-[rgba(8,56,96,0.12)]')}
+            >
+              {ref.label}
+            </a>
+          );
+        }
+        return (
+          <span
+            key={i}
+            className={cn(chipBase, 'border-serif-border/70 text-serif-muted-foreground bg-slate-50')}
+          >
+            {ref.label}
+          </span>
+        );
+      })}
+    </div>
   );
 }
 

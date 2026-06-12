@@ -87,6 +87,7 @@ export default function ChatPanel({ moduleKey }: { moduleKey: ModuleKey }) {
     isStreaming: streaming,
     setIsStreaming,
     customSuggestedQuestions,
+    moduleContext,
     _registerSendImpl,
   } = useChatPanel();
 
@@ -182,6 +183,7 @@ export default function ChatPanel({ moduleKey }: { moduleKey: ModuleKey }) {
       isSuggestedQuestion: args.isSuggestedQuestion,
       previousModuleKey:
         previousModuleKey && previousModuleKey !== moduleKey ? previousModuleKey : undefined,
+      moduleContext: moduleContext ?? undefined,
     };
 
     try {

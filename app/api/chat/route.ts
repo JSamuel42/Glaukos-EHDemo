@@ -45,6 +45,7 @@ function buildSystem(
   attachedItemIds: string[],
   isSuggestedQuestion: boolean,
   previousModuleKey: ModuleKey | undefined,
+  moduleContext?: string,
 ): Anthropic.TextBlockParam[] {
   const config = getChatConfig(moduleKey);
   let prompt = config.systemPrompt;
@@ -75,6 +76,11 @@ function buildSystem(
   // a system-prompt-visible separator.
   if (previousModuleKey && previousModuleKey !== moduleKey) {
     prompt += `\n\nCONTEXT SHIFT: The user has just navigated from the "${previousModuleKey}" module to "${moduleKey}". Briefly acknowledge this in your response if relevant to conversational continuity — e.g., "I see you've moved from the Library to Ask GVD. I can continue our earlier thread or focus on this GVD." Keep the acknowledgement short and natural; don't belabor it.`;
+  }
+
+  // Live module context (Phase 6) — what the user is currently looking at.
+  if (moduleContext && moduleContext.trim()) {
+    prompt += `\n\nCURRENT MODULE CONTEXT (live — what the user is viewing right now):\n${moduleContext.trim()}\n\nGround your answer in this current context when relevant.`;
   }
 
   // Suggested-question entry point — suppress clarifying questions because
@@ -209,6 +215,7 @@ export async function POST(req: NextRequest) {
     body.attachedItemIds ?? [],
     body.isSuggestedQuestion ?? false,
     body.previousModuleKey,
+    body.moduleContext,
   );
 
   const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });

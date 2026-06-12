@@ -7,6 +7,24 @@ import { signOffState, SIGNOFF_META, SIGNOFF_ORDER } from '@/lib/dossier/signoff
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/**
+ * Phase 6 — turn inline `[#N]` citation tokens into in-app anchors that
+ * deep-link to the Library article. `N` is matched against the section's own
+ * article links (articleNumber → libraryArticleId). Unmapped tokens are left
+ * as plain text. These are normal same-tab links handled by the Library's
+ * ?article= deep-link handler.
+ */
+function linkifyCitations(html: string, links: SectionArticleLink[]): string {
+  if (!html) return html;
+  const byNumber = new Map<number, string>();
+  for (const l of links) byNumber.set(l.articleNumber, l.libraryArticleId);
+  return html.replace(/\[#(\d+)\]/g, (match, n: string) => {
+    const id = byNumber.get(Number(n));
+    if (!id) return match;
+    return `<a href="/library?article=${encodeURIComponent(id)}" class="citation-link">[#${n}]</a>`;
+  });
+}
+
 /** Heading element per section level. */
 function SectionHeading({ level, children }: { level: number; children: React.ReactNode }) {
   const baseClass = 'font-playfair font-normal';
@@ -196,7 +214,7 @@ export function CompiledView({ dossier, sections, onClose }: CompiledViewProps) 
           <button
             type="button"
             disabled
-            title="Export — coming in Session 6"
+            title="Export — coming soon"
             className="px-4 py-2 rounded-[6px] text-sm border transition-all opacity-40 cursor-not-allowed"
             style={{ borderColor: 'var(--serif-border)', color: 'var(--serif-foreground)' }}
           >
@@ -275,7 +293,7 @@ export function CompiledView({ dossier, sections, onClose }: CompiledViewProps) 
                     <div
                       className="prose-compiled"
                       style={{ color: 'var(--serif-foreground)', fontSize: '14px', lineHeight: '1.75' }}
-                      dangerouslySetInnerHTML={{ __html: section.currentContent.content }}
+                      dangerouslySetInnerHTML={{ __html: linkifyCitations(section.currentContent.content, section.articleLinks) }}
                     />
                     <style>{`
                       .prose-compiled p { margin-bottom: 0.75em; }
@@ -286,6 +304,8 @@ export function CompiledView({ dossier, sections, onClose }: CompiledViewProps) 
                       .prose-compiled table { border-collapse: collapse; width: 100%; margin-bottom: 1em; }
                       .prose-compiled th, .prose-compiled td { border: 1px solid var(--serif-border); padding: 6px 10px; text-align: left; font-size: 13px; }
                       .prose-compiled th { background: var(--serif-muted); font-weight: 600; }
+                      .prose-compiled .citation-link { color: var(--serif-accent); text-decoration: none; font-weight: 500; }
+                      .prose-compiled .citation-link:hover { text-decoration: underline; }
                     `}</style>
                     <SectionReasoningToggle section={section} />
                   </>

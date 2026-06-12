@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { FUNNELS } from '@/lib/epidemiology/data';
+import { useEffect, useState } from 'react';
+import { FUNNELS, getFunnel } from '@/lib/epidemiology/data';
+import { computeFunnel, formatAbsolute } from '@/lib/epidemiology/calc';
 import { FunnelWorkspace } from '@/components/epidemiology/FunnelWorkspace';
 import { SavedFunnelsList } from '@/components/epidemiology/SavedFunnelsList';
+import { useChatPanel } from '@/components/chat/ChatPanelContext';
 
 /**
  * Epidemiology — Target Population Funnels.
@@ -20,6 +22,29 @@ import { SavedFunnelsList } from '@/components/epidemiology/SavedFunnelsList';
 export default function EpidemiologyPage() {
   const [primaryId, setPrimaryId] = useState<string>(FUNNELS[0].id);
   const [comparisonId, setComparisonId] = useState<string | null>(null);
+  const { setModuleContext } = useChatPanel();
+
+  // ── Chat grounding (Phase 6) ──────────────────────────────────────────────────
+  // Describe the primary funnel — country, base population, and the computed
+  // tier cascade down to the surgical-eligible target — to the chat panel.
+  useEffect(() => {
+    const funnel = getFunnel(primaryId);
+    if (!funnel) {
+      setModuleContext(null);
+      return;
+    }
+    const levels = computeFunnel(funnel);
+    // End the cascade at the surgical-eligible target tier (inclusive).
+    const targetIdx = levels.findIndex((l) => l.isTarget);
+    const tiers = (targetIdx >= 0 ? levels.slice(0, targetIdx + 1) : levels)
+      .map((l) => `${l.name} = ${formatAbsolute(l.absolute)} (${l.percentage}%)`)
+      .join(' → ');
+    const ctx =
+      `Active funnel: ${funnel.countryFullName} ` +
+      `(adults 40+: ${formatAbsolute(funnel.topLevelAbsolute)}). Tiers: ${tiers}`;
+    setModuleContext(ctx);
+    return () => setModuleContext(null);
+  }, [primaryId, setModuleContext]);
 
   function handleCompare(id: string) {
     if (id === primaryId) return; // already in primary slot

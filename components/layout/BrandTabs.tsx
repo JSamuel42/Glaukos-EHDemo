@@ -20,11 +20,9 @@ export default function BrandTabs() {
               <button
                 type="button"
                 onClick={() => {
-                  if (b.populated) {
-                    setActive(b.key);
-                  } else {
-                    console.log(`[brand] ${b.name} — coming soon`);
-                  }
+                  // Only the populated brand is interactive in this demo;
+                  // other brand tabs are inert placeholders.
+                  if (b.populated) setActive(b.key);
                 }}
                 className={cn(
                   'rounded-full px-4 py-1.5 text-sm transition-colors',

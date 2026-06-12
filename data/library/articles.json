@@ -22,7 +22,14 @@
     "population": "Adults aged 40–79 years across global regions",
     "interventions": "Not applicable (epidemiology / burden study)",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Clinical", "subcategories": ["Epidemiology"] }],
+    "categories": [
+      {
+        "category": "Burden - Clinical",
+        "subcategories": [
+          "Epidemiology"
+        ]
+      }
+    ],
     "scientific_narrative_link": null,
     "value_message_link": null,
     "objection_handler_link": null,
@@ -53,7 +60,14 @@
     "population": "European adults, predominantly older populations",
     "interventions": "Not applicable (epidemiology / burden study)",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Clinical", "subcategories": ["Epidemiology"] }],
+    "categories": [
+      {
+        "category": "Burden - Clinical",
+        "subcategories": [
+          "Epidemiology"
+        ]
+      }
+    ],
     "scientific_narrative_link": null,
     "value_message_link": null,
     "objection_handler_link": null,
@@ -84,7 +98,14 @@
     "population": "California Medicare beneficiaries aged 65 and over",
     "interventions": "Not applicable (epidemiology / burden study)",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Clinical", "subcategories": ["Epidemiology"] }],
+    "categories": [
+      {
+        "category": "Burden - Clinical",
+        "subcategories": [
+          "Epidemiology"
+        ]
+      }
+    ],
     "scientific_narrative_link": null,
     "value_message_link": null,
     "objection_handler_link": null,
@@ -115,7 +136,14 @@
     "population": "Elderly White population aged 60 and over, urban Northern Greece",
     "interventions": "Not applicable (epidemiology / burden study)",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Clinical", "subcategories": ["Epidemiology"] }],
+    "categories": [
+      {
+        "category": "Burden - Clinical",
+        "subcategories": [
+          "Epidemiology"
+        ]
+      }
+    ],
     "scientific_narrative_link": null,
     "value_message_link": null,
     "objection_handler_link": null,
@@ -146,7 +174,14 @@
     "population": "POAG patients at a tertiary care center, Memphis TN",
     "interventions": "Not applicable (epidemiology / burden study)",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Socioeconomic", "subcategories": ["Direct costs"] }],
+    "categories": [
+      {
+        "category": "Burden - Socioeconomic",
+        "subcategories": [
+          "Direct costs"
+        ]
+      }
+    ],
     "scientific_narrative_link": null,
     "value_message_link": null,
     "objection_handler_link": null,
@@ -177,7 +212,14 @@
     "population": "Population-based screening cohort, Malmo, Sweden",
     "interventions": "Not applicable (epidemiology / burden study)",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Clinical", "subcategories": ["Morbidity / Mortality"] }],
+    "categories": [
+      {
+        "category": "Burden - Clinical",
+        "subcategories": [
+          "Morbidity / Mortality"
+        ]
+      }
+    ],
     "scientific_narrative_link": null,
     "value_message_link": null,
     "objection_handler_link": null,
@@ -208,7 +250,14 @@
     "population": "Patients with early primary open-angle glaucoma",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Management", "subcategories": ["Treatment patterns"] }],
+    "categories": [
+      {
+        "category": "Management",
+        "subcategories": [
+          "Treatment patterns"
+        ]
+      }
+    ],
     "scientific_narrative_link": null,
     "value_message_link": null,
     "objection_handler_link": null,
@@ -239,7 +288,14 @@
     "population": "Northeast Asian general and myopic populations",
     "interventions": "Not applicable (epidemiology / burden study)",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Clinical", "subcategories": ["Epidemiology"] }],
+    "categories": [
+      {
+        "category": "Burden - Clinical",
+        "subcategories": [
+          "Epidemiology"
+        ]
+      }
+    ],
     "scientific_narrative_link": null,
     "value_message_link": null,
     "objection_handler_link": null,
@@ -270,8 +326,15 @@
     "population": "Patients across the glaucoma disease spectrum",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Clinical", "subcategories": ["Morbidity / Mortality"] }],
-    "scientific_narrative_link": null,
+    "categories": [
+      {
+        "category": "Burden - Clinical",
+        "subcategories": [
+          "Morbidity / Mortality"
+        ]
+      }
+    ],
+    "scientific_narrative_link": "S3",
     "value_message_link": null,
     "objection_handler_link": null,
     "abstract": "The glaucomas are a group of conditions leading to irreversible sight loss, characterised by progressive loss of retinal ganglion cells. Intraocular pressure is the only modifiable risk factor demonstrated by large clinical trials, and remains the leading cause of irreversible blindness. Timely treatment to lower intraocular pressure is effective at slowing vision loss. Many cases remain undiagnosed until advanced stages due to limitations of screening and poor access to case finding. Methods for lowering intraocular pressure include laser treatments, topical medications, and surgery.",
@@ -301,9 +364,16 @@
     "population": "Adults with newly diagnosed advanced open-angle glaucoma",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Humanistic", "subcategories": ["COA / PROs"] }],
-    "scientific_narrative_link": null,
-    "value_message_link": null,
+    "categories": [
+      {
+        "category": "Burden - Humanistic",
+        "subcategories": [
+          "COA / PROs"
+        ]
+      }
+    ],
+    "scientific_narrative_link": "S1",
+    "value_message_link": "U2",
     "objection_handler_link": null,
     "abstract": "The Treatment of Advanced Glaucoma Study (TAGS) was a multicentre randomised controlled trial in 453 adults with newly diagnosed advanced open-angle glaucoma in the UK. At 5 years, vision-specific quality of life measured with the VFQ-25 was similar between primary trabeculectomy (83.3) and medical management (81.3). Mean intraocular pressure was lower with trabeculectomy (12.07 versus 14.76 mmHg), and visual field mean deviation was better preserved. Primary trabeculectomy surgery is more effective in lowering IOP and preventing disease progression than primary medical treatment in patients with advanced disease.",
     "funnel_level": "L4 Uncontrolled / advanced",
@@ -332,8 +402,15 @@
     "population": "Patients presenting with advanced glaucoma at diagnosis",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Humanistic", "subcategories": ["COA / PROs"] }],
-    "scientific_narrative_link": null,
+    "categories": [
+      {
+        "category": "Burden - Humanistic",
+        "subcategories": [
+          "COA / PROs"
+        ]
+      }
+    ],
+    "scientific_narrative_link": "S1",
     "value_message_link": null,
     "objection_handler_link": null,
     "abstract": "Presentation with advanced glaucoma is a significant risk factor for lifetime blindness. The asymptomatic nature of glaucoma contributes to late presentation. Those most at risk of presenting with advanced glaucoma have asymptomatic high intraocular pressure, no family history, are socially disadvantaged, and do not attend sight testing. Patients with glaucoma may have impaired functionality for daily activities such as reading, walking and driving. Quality of life measures are significantly worse in patients with more severe visual field loss, particularly if bilateral, and decreases faster with further bilateral field loss when advanced damage is present. Management requires disproportionally more resources than earlier disease.",
@@ -363,7 +440,14 @@
     "population": "Patients with moderate/severe POAG and controls",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Humanistic", "subcategories": ["COA / PROs"] }],
+    "categories": [
+      {
+        "category": "Burden - Humanistic",
+        "subcategories": [
+          "COA / PROs"
+        ]
+      }
+    ],
     "scientific_narrative_link": null,
     "value_message_link": null,
     "objection_handler_link": null,
@@ -394,9 +478,16 @@
     "population": "Patients with advanced open-angle glaucoma",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Clinical", "subcategories": ["Morbidity / Mortality"] }],
-    "scientific_narrative_link": null,
-    "value_message_link": null,
+    "categories": [
+      {
+        "category": "Burden - Clinical",
+        "subcategories": [
+          "Morbidity / Mortality"
+        ]
+      }
+    ],
+    "scientific_narrative_link": "S3",
+    "value_message_link": "U2",
     "objection_handler_link": null,
     "abstract": "This study followed 127 patients with advanced open-angle glaucoma for seven years or more to identify key monitoring factors. Over 11 years, glaucoma progression was detected in 46.5% of eyes. The rate of mean deviation change was -0.43 dB/year overall, -0.67 dB/year for progressors. Inadequate intraocular pressure reduction, better baseline mean deviation, presence of disc haemorrhage, and lower central corneal thickness were identified as risk factors for progression. Patients with higher percentage IOP reduction (greater than 20.94%) had lower risk of progression.",
     "funnel_level": "L4 Uncontrolled / advanced",
@@ -425,9 +516,16 @@
     "population": "Patients with glaucoma aged 40 and over",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Socioeconomic", "subcategories": ["Direct costs"] }],
+    "categories": [
+      {
+        "category": "Burden - Socioeconomic",
+        "subcategories": [
+          "Direct costs"
+        ]
+      }
+    ],
     "scientific_narrative_link": null,
-    "value_message_link": null,
+    "value_message_link": "E2",
     "objection_handler_link": null,
     "abstract": "This cost-utility analysis estimated the value of adherence to prescribed glaucoma medication using Monte Carlo microsimulation. The majority of patients with glaucoma do not take medications as prescribed. Nonadherent patients proceeded to single-eye blindness as early as 19 years versus 23 years for adherent patients. Total healthcare costs averaged 62,782 dollars for adherent and 52,722 dollars for nonadherent patients, with nonadherent patients having a mean loss of 0.34 quality-adjusted life years, giving a cost-effectiveness ratio of 29,600 dollars per QALY gained. There is room to expand services to improve adherence.",
     "funnel_level": "L4 Treated (adherence)",
@@ -456,7 +554,14 @@
     "population": "Patients with juvenile open-angle glaucoma",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Clinical", "subcategories": ["Morbidity / Mortality"] }],
+    "categories": [
+      {
+        "category": "Burden - Clinical",
+        "subcategories": [
+          "Morbidity / Mortality"
+        ]
+      }
+    ],
     "scientific_narrative_link": null,
     "value_message_link": null,
     "objection_handler_link": null,
@@ -487,8 +592,15 @@
     "population": "Open-angle glaucoma patients eligible for MIGS",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Management", "subcategories": ["Treatment patterns"] }],
-    "scientific_narrative_link": null,
+    "categories": [
+      {
+        "category": "Management",
+        "subcategories": [
+          "Treatment patterns"
+        ]
+      }
+    ],
+    "scientific_narrative_link": "S4",
     "value_message_link": null,
     "objection_handler_link": null,
     "abstract": "This overview summarised data from randomised trials of minimally invasive glaucoma surgery (MIGS) for open-angle glaucoma across six Cochrane reviews. Glaucoma affects more than 75 million people worldwide and IOP-lowering surgery is an important treatment. Interest in reducing surgical morbidity has led to introduction of MIGS. Adding a Hydrus or iStent microstent to cataract surgery safely improved the likelihood of drop-free glaucoma control compared with cataract surgery alone. Trabecular bypass devices including iStent improved drop-free disease control, supporting MIGS as an option for eligible patients.",
@@ -518,8 +630,15 @@
     "population": "German adults aged 35–74 with glaucoma",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Management", "subcategories": ["Treatment patterns"] }],
-    "scientific_narrative_link": null,
+    "categories": [
+      {
+        "category": "Management",
+        "subcategories": [
+          "Treatment patterns"
+        ]
+      }
+    ],
+    "scientific_narrative_link": "S6",
     "value_message_link": null,
     "objection_handler_link": null,
     "abstract": "Approximately 1.4% of the German population aged 35 to 74 suffers from glaucoma, one of the more common causes of blindness. The only evidence-based treatment is lowering intraocular pressure. Trabeculectomy is the reference standard in glaucoma surgery but leads to complications in 3-15% of cases. In minimally invasive glaucoma surgery, very small stents can be implanted with a better safety profile, indicated for mild or moderate glaucoma. The iStent inject and Hydrus Microstent procedures demonstrated additional pressure-lowering effect beyond cataract surgery (1.9 and 1.8 mmHg) and have been found to slow the progression of visual field defects.",
@@ -549,8 +668,15 @@
     "population": "Glaucoma patients undergoing surgical intervention",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Management", "subcategories": ["Treatment patterns"] }],
-    "scientific_narrative_link": null,
+    "categories": [
+      {
+        "category": "Management",
+        "subcategories": [
+          "Treatment patterns"
+        ]
+      }
+    ],
+    "scientific_narrative_link": "S2,S6,S13",
     "value_message_link": null,
     "objection_handler_link": null,
     "abstract": "The introduction of minimally invasive glaucoma surgery (MIGS) has changed the surgical landscape of glaucoma. For more than four decades the most commonly performed glaucoma surgery has been trabeculectomy. There is a growing trend of mild to moderate glaucoma cases undergoing MIGS procedures instead of trabeculectomy. Glaucoma drainage device implantation may also have taken a significant share of filtering surgery for more severe glaucoma. Currently trabeculectomy is still the most common glaucoma surgery performed worldwide, however the proportion undergoing MIGS is increasing rapidly.",
@@ -580,8 +706,15 @@
     "population": "Eyes with uncontrolled glaucoma undergoing primary surgery",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Burden - Clinical", "subcategories": ["Morbidity / Mortality"] }],
-    "scientific_narrative_link": null,
+    "categories": [
+      {
+        "category": "Burden - Clinical",
+        "subcategories": [
+          "Morbidity / Mortality"
+        ]
+      }
+    ],
+    "scientific_narrative_link": "S12",
     "value_message_link": null,
     "objection_handler_link": null,
     "abstract": "This cohort analysis of the Primary Tube Versus Trabeculectomy Study described visual field outcomes in 155 eyes randomised to tube shunt surgery or trabeculectomy with mitomycin C. The mean rate of change in standard automated perimetry mean deviation was -0.32 dB/year in the trabeculectomy group and -0.47 dB/year in the tube group, with no statistically significant difference. Worse intraocular pressure control was significantly associated with faster rates of mean deviation loss, and older patients were at risk for faster progression, underscoring the importance of IOP control in surgically managed patients.",
@@ -611,8 +744,15 @@
     "population": "Adults with POAG inadequately controlled on maximum tolerated medical therapy",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Management", "subcategories": ["Treatment patterns"] }],
-    "scientific_narrative_link": null,
+    "categories": [
+      {
+        "category": "Management",
+        "subcategories": [
+          "Treatment patterns"
+        ]
+      }
+    ],
+    "scientific_narrative_link": "S12",
     "value_message_link": null,
     "objection_handler_link": null,
     "abstract": "This prospective randomised multicentre trial compared the MicroShunt versus trabeculectomy in adults with mild to severe POAG inadequately controlled on maximum tolerated medical therapy with IOP at or above 15 mmHg. At 2 years, surgical success was lower in the MicroShunt group than trabeculectomy (50.6% versus 64.4%). Mean diurnal IOP was reduced from 21.1 to 13.9 mmHg in the MicroShunt group and from 21.1 to 10.7 mmHg in the trabeculectomy group. Both interventions provided significant reductions in IOP and medication use, with trabeculectomy having greater surgical success. This characterises the inadequately-controlled population requiring surgical escalation.",
@@ -642,8 +782,15 @@
     "population": "Patients with moderate-to-advanced glaucoma",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Management", "subcategories": ["Treatment patterns"] }],
-    "scientific_narrative_link": null,
+    "categories": [
+      {
+        "category": "Management",
+        "subcategories": [
+          "Treatment patterns"
+        ]
+      }
+    ],
+    "scientific_narrative_link": "S12",
     "value_message_link": null,
     "objection_handler_link": null,
     "abstract": "This meta-analysis compared PreserFlo MicroShunt and trabeculectomy in moderate-to-advanced glaucoma (mean deviation worse than -6 dB) across 10 studies and 1833 eyes. Preoperative IOP was 22.1 mmHg and 56.1% had moderate-to-severe glaucoma. No significant differences were found in qualified and complete success rates. Trabeculectomy achieved better IOP outcomes and greater IOP reduction, while PreserFlo showed less visual field progression and lower hypotony risk. The analysis characterises surgical decision-making in the uncontrolled, surgically-eligible glaucoma population.",
@@ -673,8 +820,15 @@
     "population": "Open-angle glaucoma patients eligible for microstent surgery",
     "interventions": "IOP-lowering therapy / surgical intervention",
     "outcomes": null,
-    "categories": [{ "category": "Management", "subcategories": ["Treatment patterns"] }],
-    "scientific_narrative_link": null,
+    "categories": [
+      {
+        "category": "Management",
+        "subcategories": [
+          "Treatment patterns"
+        ]
+      }
+    ],
+    "scientific_narrative_link": "S4,S5",
     "value_message_link": null,
     "objection_handler_link": null,
     "abstract": "This Cochrane review evaluated supraciliary microstent surgery for open-angle glaucoma. Glaucoma is the leading cause of global irreversible blindness, often associated with raised intraocular pressure. Where medical or laser treatment has failed or is not tolerated, surgery is often required, and minimally-invasive surgical approaches have been developed to reduce IOP with lower surgical risks. One trial of 505 eyes showed supraciliary microstent combined with phacoemulsification increased the proportion of medication-free patients at 24 months (85% versus 59%) with greater IOP reduction, though long-term safety concerns led to device withdrawal. Few high-quality studies compare MIGS to standard treatments.",

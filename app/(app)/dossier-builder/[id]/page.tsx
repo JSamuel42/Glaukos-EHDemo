@@ -1,7 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useChatPanel } from '@/components/chat/ChatPanelContext';
+import { signOffState, SIGNOFF_META } from '@/lib/dossier/signoff';
 import {
   OutlinePanel,
   SectionEditor,
@@ -63,6 +65,8 @@ function StatusSelect({ value, onChange }: { value: DossierStatus; onChange: (v:
 function DossierDetailContent() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { setModuleContext } = useChatPanel();
   const dossierId = typeof params.id === 'string' ? params.id : '';
 
   const [summary, setSummary] = useState<DossierSummary | null>(null);
@@ -73,6 +77,10 @@ function DossierDetailContent() {
   const [showCompiled, setShowCompiled] = useState(false);
   const [showContextManager, setShowContextManager] = useState(false);
   const [tagModalSection, setTagModalSection] = useState<DossierSection | null>(null);
+
+  // Guard so the ?section= deep-link only drives selection once on initial
+  // load — it must not fight subsequent manual selection.
+  const sectionDeepLinkApplied = useRef(false);
 
   // ── Load ────────────────────────────────────────────────────────────────────
 
@@ -91,6 +99,26 @@ function DossierDetailContent() {
     reload();
     setIsLoading(false);
   }, [reload]);
+
+  // ── ?section= deep-link (once on initial load) ────────────────────────────────
+  // When LibraryTable jumps here with ?section=<number>, select the matching
+  // section. Guarded so it only runs once — manual selection afterwards wins.
+  useEffect(() => {
+    if (sectionDeepLinkApplied.current) return;
+    if (sections.length === 0) return;
+    const wanted = searchParams.get('section');
+    if (!wanted) {
+      sectionDeepLinkApplied.current = true;
+      return;
+    }
+    const flatSections = flattenSectionTree(sections);
+    const match = flatSections.find((s) => s.number === wanted);
+    sectionDeepLinkApplied.current = true;
+    if (match) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedSectionId(match.id);
+    }
+  }, [sections, searchParams]);
 
   // ── Outline handlers ────────────────────────────────────────────────────────
 
@@ -171,6 +199,28 @@ function DossierDetailContent() {
   const tagSectionLatest = tagModalSection
     ? flat.find((s) => s.id === tagModalSection.id) ?? null
     : null;
+
+  // ── Chat grounding (Phase 6) ──────────────────────────────────────────────────
+  // Describe the active dossier + selected section to the platform chat panel
+  // so the assistant can reason about what the user is looking at. Cleared on
+  // unmount.
+  useEffect(() => {
+    if (!summary) return;
+    let ctx = `Active dossier: "${summary.title}" (${summary.region}). `;
+    if (selectedSection) {
+      const signOff = SIGNOFF_META[signOffState(selectedSection.signOff)].label;
+      const guidance = (selectedSection.guidanceNotes ?? '').slice(0, 160);
+      ctx +=
+        `Selected section: ${selectedSection.number} ${selectedSection.title} ` +
+        `[status: ${selectedSection.status}; sign-off: ${signOff}]. ` +
+        `Linked references: ${selectedSection.articleLinks.length}.` +
+        (guidance ? ` Guidance: ${guidance}.` : '');
+    } else {
+      ctx += 'No section selected.';
+    }
+    setModuleContext(ctx);
+    return () => setModuleContext(null);
+  }, [summary, selectedSection, setModuleContext]);
 
   if (isLoading || !summary) {
     return (
@@ -302,9 +352,12 @@ function DossierDetailContent() {
 }
 
 export default function DossierDetailPage() {
+  // Suspense boundary required by `useSearchParams` (?section= deep-link).
   return (
     <DossierSeeder>
-      <DossierDetailContent />
+      <Suspense fallback={null}>
+        <DossierDetailContent />
+      </Suspense>
     </DossierSeeder>
   );
 }

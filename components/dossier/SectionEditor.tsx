@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -981,6 +982,14 @@ export function SectionEditor({
                           {link.journal}{link.pubDate ? ` · ${link.pubDate}` : ''}
                         </p>
                       )}
+                      <Link
+                        href={`/library?article=${encodeURIComponent(link.libraryArticleId)}`}
+                        title="Open this reference in the Library"
+                        className="inline-block font-mono text-[10px] mt-0.5 hover:underline"
+                        style={{ color: 'var(--serif-accent)' }}
+                      >
+                        Library ↗
+                      </Link>
                     </div>
                     <button
                       type="button"

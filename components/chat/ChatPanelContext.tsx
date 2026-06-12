@@ -82,6 +82,13 @@ interface ChatPanelContextValue {
   customSuggestedQuestions: CustomSuggestedQuestion[] | null;
   setCustomSuggestedQuestions: (qs: CustomSuggestedQuestion[] | null) => void;
 
+  // Live module context (Phase 6) — a short string describing what the user
+  // is currently viewing (active dossier + section, active funnel, etc.).
+  // Pages set it on mount / when their active state changes and clear on
+  // unmount; the chat panel forwards it to the API as `moduleContext`.
+  moduleContext: string | null;
+  setModuleContext: (ctx: string | null) => void;
+
   // Programmatic send. The chat panel registers its real send implementation
   // via `_registerSendImpl` on mount; pages call `sendMessage` to push a
   // message into the conversation without going through the chat input form.
@@ -108,6 +115,7 @@ export function ChatPanelProvider({
   const [isStreaming, setIsStreaming] = useState(false);
   const [customSuggestedQuestions, setCustomSuggestedQuestions] =
     useState<CustomSuggestedQuestion[] | null>(null);
+  const [moduleContext, setModuleContext] = useState<string | null>(null);
 
   const setOnCitationClick = useCallback((handler: CitationClickHandler | undefined) => {
     // Wrap in a setter that doesn't lose the function reference. React's
@@ -152,6 +160,8 @@ export function ChatPanelProvider({
         setIsStreaming,
         customSuggestedQuestions,
         setCustomSuggestedQuestions,
+        moduleContext,
+        setModuleContext,
         sendMessage,
         _registerSendImpl,
       }}
