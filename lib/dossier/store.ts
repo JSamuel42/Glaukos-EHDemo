@@ -369,6 +369,10 @@ export function adaptFromGlobal(targetDossierId: string, sectionId: string): str
     wordCount: globalCurrent.wordCount,
     source: 'hybrid',
     agentReasoning: globalCurrent.agentReasoning,
+    // Carry the visual payload forward (Audit+Fix 4) — without this, adapting a
+    // visual section from Global produced a contentType:'visual' version with
+    // no spec, so the funnel/SVG silently dropped in the country dossier.
+    visual: globalCurrent.visual,
   });
   return section.number;
 }
