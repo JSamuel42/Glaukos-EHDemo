@@ -92,6 +92,8 @@ export interface StoredSection {
   contentVersions: StoredContentVersion[];
   /** Preserved from the demo seed; surfaces the pre-generation caveat banner. */
   preGenerationNote?: string;
+  /** Sign-off toggles (Phase 5.7) — cumulative; default both false = AI draft. */
+  signOff?: { humanVerified: boolean; gvdApproved: boolean };
   createdAt: string;
   updatedAt: string;
 }
@@ -205,6 +207,7 @@ export function buildSectionTree(sections: StoredSection[]): DossierSection[] {
       currentContent,
       contentVersions: versions as SectionContent[],
       preGenerationNote: s.preGenerationNote,
+      signOff: s.signOff,
     };
   }
 
@@ -442,6 +445,32 @@ export function updateSection(
   all[dIdx].updatedAt = now;
   writeAllDossiers(all);
   return all[dIdx].sections[sIdx];
+}
+
+/**
+ * Set a section's sign-off (Phase 5.7). Cumulative: GVD approval implies human
+ * verification; clearing human verification clears GVD approval.
+ */
+export function setSectionSignOff(
+  dossierId: string,
+  sectionId: string,
+  patch: { humanVerified?: boolean; gvdApproved?: boolean },
+): void {
+  const all = readAllDossiers();
+  const dIdx = all.findIndex((d) => d.id === dossierId);
+  if (dIdx === -1) return;
+  const sIdx = all[dIdx].sections.findIndex((s) => s.id === sectionId);
+  if (sIdx === -1) return;
+  const cur = all[dIdx].sections[sIdx].signOff ?? { humanVerified: false, gvdApproved: false };
+  let humanVerified = patch.humanVerified ?? cur.humanVerified;
+  let gvdApproved = patch.gvdApproved ?? cur.gvdApproved;
+  // Enforce cumulative invariant.
+  if (gvdApproved) humanVerified = true;
+  if (!humanVerified) gvdApproved = false;
+  all[dIdx].sections[sIdx].signOff = { humanVerified, gvdApproved };
+  all[dIdx].sections[sIdx].updatedAt = new Date().toISOString();
+  all[dIdx].updatedAt = new Date().toISOString();
+  writeAllDossiers(all);
 }
 
 export function deleteSection(dossierId: string, sectionId: string): boolean {

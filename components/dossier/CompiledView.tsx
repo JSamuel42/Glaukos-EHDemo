@@ -3,10 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { DossierSummary, DossierSection, SectionArticleLink } from '@/lib/dossier/types';
 import { flattenSectionTree } from '@/lib/dossier/store';
+import { signOffState, SIGNOFF_META, SIGNOFF_ORDER } from '@/lib/dossier/signoff';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-const SOURCE_LABELS = { ai: 'AI draft', human: 'Human edited', hybrid: 'Hybrid' } as const;
 
 /** Heading element per section level. */
 function SectionHeading({ level, children }: { level: number; children: React.ReactNode }) {
@@ -179,6 +178,21 @@ export function CompiledView({ dossier, sections, onClose }: CompiledViewProps) 
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Sign-off legend — role-based approval is illustrative, not enforced */}
+          <div className="hidden md:flex items-center gap-2 mr-1" title="Section sign-off — role-based approval is illustrative, not enforced in this demo.">
+            {SIGNOFF_ORDER.map((st) => {
+              const m = SIGNOFF_META[st];
+              return (
+                <span
+                  key={st}
+                  className="font-mono text-[9px] tracking-[0.06em] uppercase px-1.5 py-0.5 rounded-[3px]"
+                  style={{ backgroundColor: m.bg, color: m.color }}
+                >
+                  {m.label}
+                </span>
+              );
+            })}
+          </div>
           <button
             type="button"
             disabled
@@ -241,15 +255,18 @@ export function CompiledView({ dossier, sections, onClose }: CompiledViewProps) 
                     {section.title}
                   </SectionHeading>
 
-                  {/* Source badge */}
-                  {section.currentContent && (
-                    <span
-                      className="absolute top-0 right-0 font-mono text-[9px] tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-[3px]"
-                      style={{ backgroundColor: 'var(--serif-muted)', color: 'var(--serif-muted-foreground)' }}
-                    >
-                      {SOURCE_LABELS[section.currentContent.source] ?? section.currentContent.source}
-                    </span>
-                  )}
+                  {/* Sign-off badge — highest state reached */}
+                  {section.currentContent && (() => {
+                    const meta = SIGNOFF_META[signOffState(section.signOff)];
+                    return (
+                      <span
+                        className="absolute top-0 right-0 font-mono text-[9px] tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-[3px]"
+                        style={{ backgroundColor: meta.bg, color: meta.color }}
+                      >
+                        {meta.label}
+                      </span>
+                    );
+                  })()}
                 </div>
 
                 {section.currentContent ? (

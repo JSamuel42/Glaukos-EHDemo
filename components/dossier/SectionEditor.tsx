@@ -20,8 +20,10 @@ import {
   updateCurrentContent,
   linkArticle,
   getArticleNumber,
+  setSectionSignOff,
 } from '@/lib/dossier/store';
 import { contextKey } from '@/lib/dossier/seed';
+import { signOffState, SIGNOFF_META, SIGNOFF_ROLE } from '@/lib/dossier/signoff';
 import {
   PILLARS,
   PILLAR_BY_KEY,
@@ -101,6 +103,47 @@ function Tbtn({ onClick, active, title, children, disabled }: TbtnProps) {
 
 function TbtnSep() {
   return <div className="w-px h-5 self-center" style={{ backgroundColor: 'var(--serif-border)' }} />;
+}
+
+// ── Sign-off toggle ─────────────────────────────────────────────────────────────
+
+interface SignOffToggleProps {
+  label: string;
+  role: string;
+  on: boolean;
+  onClick: () => void;
+}
+
+function SignOffToggle({ label, role, on, onClick }: SignOffToggleProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      title={`${label} — ${role} sign-off (role-based access illustrative, not enforced)`}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[5px] border text-[11px] font-mono transition-all duration-100"
+      style={{
+        borderColor: on ? 'var(--serif-accent)' : 'var(--serif-border)',
+        backgroundColor: on ? 'rgba(8,56,96,0.08)' : 'transparent',
+        color: on ? 'var(--serif-accent)' : 'var(--serif-muted-foreground)',
+      }}
+    >
+      <span
+        className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-[3px] border"
+        style={{
+          borderColor: on ? 'var(--serif-accent)' : 'var(--serif-border)',
+          backgroundColor: on ? 'var(--serif-accent)' : 'transparent',
+        }}
+      >
+        {on && (
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+            <path d="M1.5 5.2L4 7.5L8.5 2.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </span>
+      {label}
+    </button>
+  );
 }
 
 // ── Spinner ───────────────────────────────────────────────────────────────────
@@ -1250,6 +1293,57 @@ export function SectionEditor({
                 </div>
               )}
             </div>
+
+            {/* Sign-off control — 2 cumulative toggles (AI draft → Human
+                verified → GVD lead approved). RBAC is illustrative, not built. */}
+            {(() => {
+              const so = section.signOff ?? { humanVerified: false, gvdApproved: false };
+              const state = signOffState(so);
+              const meta = SIGNOFF_META[state];
+              return (
+                <div
+                  className="flex items-center gap-3 px-4 py-2.5 flex-shrink-0 border-t flex-wrap"
+                  style={{ borderColor: 'var(--serif-border)', backgroundColor: 'var(--serif-card)' }}
+                >
+                  <span className="font-mono text-[9px] font-medium tracking-[0.12em] uppercase" style={{ color: 'var(--serif-muted-foreground)' }}>
+                    Sign-off
+                  </span>
+                  <span
+                    className="font-mono text-[9px] font-medium tracking-[0.08em] uppercase px-2 py-0.5 rounded-[3px]"
+                    style={{ backgroundColor: meta.bg, color: meta.color }}
+                  >
+                    {meta.label}
+                  </span>
+
+                  <SignOffToggle
+                    label="Human verified"
+                    role={SIGNOFF_ROLE['human-verified']}
+                    on={so.humanVerified}
+                    onClick={() => {
+                      setSectionSignOff(dossierId, section.id, { humanVerified: !so.humanVerified });
+                      onSectionUpdate(section);
+                    }}
+                  />
+                  <SignOffToggle
+                    label="GVD lead approved"
+                    role={SIGNOFF_ROLE['gvd-approved']}
+                    on={so.gvdApproved}
+                    onClick={() => {
+                      setSectionSignOff(dossierId, section.id, { gvdApproved: !so.gvdApproved });
+                      onSectionUpdate(section);
+                    }}
+                  />
+
+                  <span
+                    className="ml-auto font-mono text-[9px]"
+                    style={{ color: 'var(--serif-muted-foreground)', opacity: 0.7 }}
+                    title="In production these toggles would be gated to the relevant role (medical writer, GVD lead). Role-based access is illustrative here, not enforced."
+                  >
+                    Role-gated in production ⓘ
+                  </span>
+                </div>
+              );
+            })()}
 
             {/* Inline generation error */}
             {generationError && !isGenerating && (

@@ -42,6 +42,8 @@ export interface DossierSection {
   articleLinks: SectionArticleLink[];
   currentContent?: SectionContent;
   contentVersions?: SectionContent[];
+  /** Sign-off toggles (Phase 5.7) — cumulative; default both false = AI draft. */
+  signOff?: { humanVerified: boolean; gvdApproved: boolean };
   /**
    * Optional advisory banner shown above the section before live generation
    * (e.g. to pre-flag an evidence gap the writing agent should explicitly
