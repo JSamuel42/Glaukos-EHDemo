@@ -14,7 +14,6 @@ import {
   type ScientificStatement,
 } from '@/lib/scientific-narrative/data';
 import {
-  DOMAIN_BY_KEY,
   STRENGTH_LABEL,
   type DomainKey,
   type ValueMessage,
