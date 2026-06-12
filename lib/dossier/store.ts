@@ -1,10 +1,14 @@
 /**
- * dossierStore — localStorage-backed dossier data store (DEMO_MODE, no DB).
- * Ported from EvHub-D, adapted to bind section→article links to the canonical
- * Phase-1 Library (lib/library/data ARTICLES) instead of EvHub-D's localStorage
- * library. No second library is introduced.
+ * dossierStore — in-memory dossier data store (DEMO_MODE, no DB).
  *
- * Key: 'glaukos-dossiers' — array of StoredDossier
+ * Phase 5.5: the store is a module-level array, seeded from the pre-baked
+ * portfolio (Global / UK / Germany) and held in memory for the session. It
+ * survives client-side navigation but is LOSSY ON REFRESH — a hard reload
+ * re-evaluates this module and re-seeds, discarding added dossiers and edits.
+ * `resetDossiers()` restores the pre-baked portfolio on demand.
+ *
+ * Section→article links bind to the canonical Phase-1 Library (lib/library/data
+ * ARTICLES). No second library is introduced.
  */
 
 import type {
@@ -22,7 +26,8 @@ import type {
 } from '@/lib/dossier/types';
 import { ARTICLES, type Article } from '@/lib/library/data';
 
-const STORAGE_KEY = 'glaukos-dossiers';
+/** Dossier id of the Global dossier — the adapt-from-Global source. */
+export const GLOBAL_DOSSIER_ID = 'demo-dossier-istent-oag';
 
 /** The single canonical Library this demo's dossiers reference. */
 export const CANONICAL_LIBRARY = {
@@ -87,35 +92,52 @@ export interface StoredDossier {
   id: string;
   libraryId: string;
   title: string;
+  /** Portfolio label shown on the landing card (e.g. 'Global', 'United Kingdom'). */
+  region: string;
+  /** Added in-session via "Add another" — reset on refresh (cosmetic flag). */
+  transient?: boolean;
   status: DossierStatus;
   createdAt: string;
   updatedAt: string;
   sections: StoredSection[];
 }
 
-// ── I/O ──────────────────────────────────────────────────────────────────────
+// ── In-memory store (DEMO_MODE, lossy on refresh) ──────────────────────────────
 
-function isBrowser(): boolean {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+/** Module-level session store. Re-seeded on module load (hard refresh). */
+let STORE: StoredDossier[] = [];
+let seeded = false;
+
+function clone<T>(v: T): T {
+  return JSON.parse(JSON.stringify(v)) as T;
+}
+
+/**
+ * Seed the portfolio once per session. Subsequent calls are no-ops unless
+ * `force` is set (used by resetDossiers). Deep-clones the seeds so in-session
+ * edits never mutate the module constants.
+ */
+export function seedDossiers(seeds: StoredDossier[], force = false): void {
+  if (seeded && !force) return;
+  STORE = seeds.map((d) => clone(d));
+  seeded = true;
+}
+
+/** Restore the pre-baked portfolio, discarding added dossiers + edits. */
+export function resetDossiers(seeds: StoredDossier[]): void {
+  seedDossiers(seeds, true);
+}
+
+export function isSeeded(): boolean {
+  return seeded;
 }
 
 export function readAllDossiers(): StoredDossier[] {
-  if (!isBrowser()) return [];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? (parsed as StoredDossier[]) : [];
-  } catch {
-    return [];
-  }
+  return STORE;
 }
 
 export function writeAllDossiers(dossiers: StoredDossier[]): void {
-  if (!isBrowser()) return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(dossiers));
-  } catch { /* quota — swallow */ }
+  STORE = dossiers;
 }
 
 function genId(prefix: string): string {
@@ -207,6 +229,8 @@ function toSummary(d: StoredDossier): DossierSummary {
     libraryIndication: CANONICAL_LIBRARY.indication,
     libraryProduct: CANONICAL_LIBRARY.product,
     title: d.title,
+    region: d.region,
+    transient: d.transient ?? false,
     status: d.status,
     sectionCount: d.sections.length,
     completedSections,
@@ -245,6 +269,8 @@ export function createDossier(input: CreateDossierInput): StoredDossier {
     id: genId('dos'),
     libraryId: input.libraryId,
     title: input.title.trim(),
+    region: 'Custom',
+    transient: true,
     status: 'draft',
     createdAt: now,
     updatedAt: now,
@@ -254,6 +280,94 @@ export function createDossier(input: CreateDossierInput): StoredDossier {
   all.push(dossier);
   writeAllDossiers(all);
   return dossier;
+}
+
+/**
+ * Add-another: create a new in-session dossier by copying the Global
+ * dossier's structure AND content forward (a snapshot — not a live link).
+ * Transient: discarded on refresh. New section/link/version ids are minted
+ * so the clone is fully independent of Global.
+ */
+export function createDossierFromGlobal(title: string): StoredDossier | undefined {
+  const global = getDossier(GLOBAL_DOSSIER_ID);
+  if (!global) return undefined;
+  const now = new Date().toISOString();
+  const newId = genId('dos');
+  const idMap = new Map<string, string>();
+  // First pass: mint new section ids so parent refs can be remapped.
+  global.sections.forEach((s) => idMap.set(s.id, genId('sec')));
+  const sections: StoredSection[] = global.sections.map((s) => ({
+    ...clone(s),
+    id: idMap.get(s.id)!,
+    dossierId: newId,
+    parentSectionId: s.parentSectionId ? (idMap.get(s.parentSectionId) ?? null) : null,
+    articleLinks: s.articleLinks.map((l) => ({
+      ...clone(l),
+      id: genId('sal'),
+      sectionId: idMap.get(s.id)!,
+    })),
+    contentVersions: s.contentVersions.map((v) => ({
+      ...clone(v),
+      id: genId('cv'),
+      sectionId: idMap.get(s.id)!,
+    })),
+    createdAt: now,
+    updatedAt: now,
+  }));
+  const dossier: StoredDossier = {
+    id: newId,
+    libraryId: global.libraryId,
+    title: title.trim() || 'New dossier',
+    region: 'Custom',
+    transient: true,
+    status: 'draft',
+    createdAt: now,
+    updatedAt: now,
+    sections,
+  };
+  const all = readAllDossiers();
+  all.push(dossier);
+  writeAllDossiers(all);
+  return dossier;
+}
+
+/**
+ * Adapt-from-Global: copy the Global dossier's current content for the
+ * section that shares this section's `number` forward into the target
+ * section as a new version (snapshot, source 'hybrid'). Returns the section
+ * number copied, or undefined if Global has no content for it.
+ */
+export function adaptFromGlobal(targetDossierId: string, sectionId: string): string | undefined {
+  if (targetDossierId === GLOBAL_DOSSIER_ID) return undefined;
+  const target = getDossier(targetDossierId);
+  const global = getDossier(GLOBAL_DOSSIER_ID);
+  if (!target || !global) return undefined;
+  const section = target.sections.find((s) => s.id === sectionId);
+  if (!section) return undefined;
+  const globalSection = global.sections.find((s) => s.number === section.number);
+  if (!globalSection) return undefined;
+  const globalCurrent = (globalSection.contentVersions ?? []).find((v) => v.isCurrent);
+  if (!globalCurrent) return undefined;
+
+  saveContentVersion(targetDossierId, sectionId, {
+    content: globalCurrent.content,
+    contentType: globalCurrent.contentType,
+    wordCount: globalCurrent.wordCount,
+    source: 'hybrid',
+    agentReasoning: globalCurrent.agentReasoning,
+  });
+  return section.number;
+}
+
+/** Section numbers in the Global dossier that currently have content. */
+export function globalSectionsWithContent(): Set<string> {
+  const global = getDossier(GLOBAL_DOSSIER_ID);
+  if (!global) return new Set();
+  const out = new Set<string>();
+  for (const s of global.sections) {
+    if ((s.contentVersions ?? []).some((v) => v.isCurrent)) out.add(s.number);
+  }
+  return out;
 }
 
 export function updateDossier(

@@ -1,39 +1,46 @@
 /**
- * Dossier demo seeding (DEMO_MODE, localStorage). Idempotent via a seed
- * version; bumping SEED_VERSION forces a re-seed of the demo dossier while
- * preserving any user-created dossiers.
+ * Dossier demo seeding (DEMO_MODE, in-memory / lossy on refresh).
+ *
+ * Seeds the pre-baked portfolio (Global / UK / Germany) into the in-memory
+ * store once per session. A hard refresh re-evaluates the store module and
+ * this re-seeds, discarding added dossiers + edits. `resetDossierDemo()`
+ * restores the portfolio on demand.
+ *
+ * The Context Manager's writing context stays in localStorage (peripheral
+ * config, not dossier content).
  */
 
-import { readAllDossiers, writeAllDossiers, type StoredDossier } from '@/lib/dossier/store';
-import { GLAUCOMA_DOSSIER_SEED, GLAUCOMA_DOSSIER_ID, GLAUCOMA_DOSSIER_CONTEXT } from '@/data/demo/glaucomaDossier';
-
-const SEED_VERSION = 1;
-const SEED_VERSION_KEY = 'glaukos-dossier-seed-version';
+import { seedDossiers, resetDossiers, isSeeded } from '@/lib/dossier/store';
+import {
+  GLAUCOMA_DOSSIER_SEEDS,
+  GLAUCOMA_DOSSIER_ID,
+  GLAUCOMA_DOSSIER_CONTEXT,
+} from '@/data/demo/glaucomaDossier';
 
 /** localStorage key for a dossier's writing context (Context Manager). */
 export function contextKey(dossierId: string): string {
   return `glaukos-dossier-context-${dossierId}`;
 }
 
-function isBrowser(): boolean {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+function seedContext(): void {
+  if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') return;
+  try {
+    // Global context seeds the writing-context default; country dossiers reuse it.
+    const key = contextKey(GLAUCOMA_DOSSIER_ID);
+    if (!window.localStorage.getItem(key)) {
+      window.localStorage.setItem(key, JSON.stringify(GLAUCOMA_DOSSIER_CONTEXT));
+    }
+  } catch { /* swallow */ }
 }
 
-/** Seed the iStent demo dossier once per seed version. */
+/** Seed the pre-baked portfolio once per session. */
 export function seedDossierDemo(): void {
-  if (!isBrowser()) return;
-  try {
-    if (window.localStorage.getItem(SEED_VERSION_KEY) === String(SEED_VERSION)) return;
+  if (isSeeded()) return;
+  seedDossiers(GLAUCOMA_DOSSIER_SEEDS);
+  seedContext();
+}
 
-    const existing = readAllDossiers();
-    const others = existing.filter((d) => d.id !== GLAUCOMA_DOSSIER_ID);
-    // Deep-clone the seed so later in-session edits never mutate the module constant.
-    const seed = JSON.parse(JSON.stringify(GLAUCOMA_DOSSIER_SEED)) as StoredDossier;
-    writeAllDossiers([seed, ...others]);
-
-    window.localStorage.setItem(contextKey(GLAUCOMA_DOSSIER_ID), JSON.stringify(GLAUCOMA_DOSSIER_CONTEXT));
-    window.localStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
-  } catch (err) {
-    console.warn('[dossier seed] failed:', err);
-  }
+/** Reset to the pre-baked portfolio, discarding added dossiers + edits. */
+export function resetDossierDemo(): void {
+  resetDossiers(GLAUCOMA_DOSSIER_SEEDS);
 }

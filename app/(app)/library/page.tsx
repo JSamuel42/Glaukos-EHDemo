@@ -20,7 +20,15 @@ import {
 import FilterToolbar from '@/components/library/FilterToolbar';
 import LibraryTable from '@/components/library/LibraryTable';
 import Pagination from '@/components/library/Pagination';
+import { seedDossierDemo } from '@/lib/dossier/seed';
+import { listDossiers, getArticleSectionNumbers } from '@/lib/dossier/store';
 import { cn } from '@/lib/cn';
+
+/** Shorten verbose region labels so the dossier columns stay narrow. */
+function shortenRegion(region: string): string {
+  if (region === 'United Kingdom') return 'UK';
+  return region;
+}
 
 const PAGE_SIZE = 50;
 /** Max articles attached to a single Summarise request — keeps the
@@ -99,6 +107,10 @@ function LibraryPageInner() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [dossierColumns, setDossierColumns] = useState<{ id: string; label: string }[]>([]);
+  const [dossierSectionLookup, setDossierSectionLookup] = useState<
+    Record<string, Record<string, string[]>>
+  >({});
 
   const { allArticles } = useLibraryStore();
 
@@ -138,6 +150,29 @@ function LibraryPageInner() {
       clearTimeout(clearT);
     };
   }, [targetArticleId, allArticles]);
+
+  // Seed the in-memory dossier portfolio, then build the per-dossier columns
+  // and the article→section-number lookup that powers the dossier-section
+  // columns appended to the table. Recomputed on mount / when the article set
+  // changes — the synchronous state sync off an external store is intended.
+  useEffect(() => {
+    seedDossierDemo();
+    const dossiers = listDossiers();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDossierColumns(dossiers.map((d) => ({ id: d.id, label: shortenRegion(d.region) })));
+
+    const lookup: Record<string, Record<string, string[]>> = {};
+    for (const d of dossiers) {
+      const byArticle: Record<string, string[]> = {};
+      for (const a of allArticles) {
+        const nums = getArticleSectionNumbers(d.id, a.id);
+        if (nums.length > 0) byArticle[a.id] = nums;
+      }
+      lookup[d.id] = byArticle;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDossierSectionLookup(lookup);
+  }, [allArticles]);
 
   const filtered = useMemo(() => applyFilters(allArticles, filterState), [allArticles, filterState]);
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -391,6 +426,8 @@ function LibraryPageInner() {
         onToggleSelected={toggleSelected}
         onToggleAllOnPage={toggleAllOnPage}
         highlightedId={highlightedId}
+        dossierColumns={dossierColumns}
+        dossierSectionLookup={dossierSectionLookup}
       />
 
       <Pagination

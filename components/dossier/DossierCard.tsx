@@ -55,8 +55,27 @@ export function DossierCard({ dossier }: Props) {
       interactive
       className="flex flex-col gap-4"
     >
+      {/* Region eyebrow + in-session tag */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span
+          className="font-mono text-[10px] font-medium tracking-[0.14em] uppercase px-2 py-0.5 rounded-[3px]"
+          style={{ backgroundColor: 'rgba(8,56,96,0.1)', color: 'var(--serif-accent)' }}
+        >
+          {dossier.region}
+        </span>
+        {dossier.transient && (
+          <span
+            className="font-mono text-[9px] font-medium tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-[3px]"
+            style={{ backgroundColor: 'rgba(186,117,23,0.12)', color: '#BA7517' }}
+            title="Added this session — resets on refresh"
+          >
+            In-session
+          </span>
+        )}
+      </div>
+
       {/* Title */}
-      <div>
+      <div className="-mt-2">
         <h3
           className="font-playfair text-xl font-normal leading-snug mb-1"
           style={{ color: 'var(--serif-foreground)' }}
@@ -64,13 +83,13 @@ export function DossierCard({ dossier }: Props) {
           {dossier.title}
         </h3>
 
-        {/* Library badge */}
-        <span
-          className="font-mono text-[10px] font-medium tracking-[0.12em] uppercase px-2 py-0.5 rounded-[3px]"
-          style={{ backgroundColor: 'rgba(8,56,96,0.1)', color: 'var(--serif-accent)' }}
+        {/* Library name */}
+        <p
+          className="font-mono text-[10px] tracking-[0.08em] uppercase"
+          style={{ color: 'var(--serif-muted-foreground)' }}
         >
           {dossier.libraryName}
-        </span>
+        </p>
       </div>
 
       {/* Indication + Product */}

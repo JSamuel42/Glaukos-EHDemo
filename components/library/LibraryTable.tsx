@@ -18,6 +18,12 @@ interface Props {
    *  draw the eye to a freshly-navigated row. The highlight fades when
    *  the page clears this back to null. */
   highlightedId?: string | null;
+  /** Per-dossier columns appended after the SN/VM/OH link columns — one per
+   *  dossier in the portfolio (Global / UK / Germany + any in-session adds).
+   *  `label` is the dossier's region. */
+  dossierColumns?: { id: string; label: string }[];
+  /** dossierId → articleId → linked section numbers (e.g. ['1.2', '1.2.1']). */
+  dossierSectionLookup?: Record<string, Record<string, string[]>>;
 }
 
 type SortKey =
@@ -122,12 +128,34 @@ function LinkPillCell({ value }: { value: string | null }) {
   );
 }
 
+/** Renders a dossier cell: the article's linked section numbers as mono
+ *  pills, or an em-dash when the article isn't linked in that dossier. */
+function DossierSectionCell({ numbers }: { numbers: string[] }) {
+  if (!numbers || numbers.length === 0) {
+    return <span className="text-serif-muted-foreground">—</span>;
+  }
+  return (
+    <div className="flex flex-wrap gap-1">
+      {numbers.map((n) => (
+        <span
+          key={n}
+          className="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-[rgba(8,56,96,0.08)] text-[color:var(--evhub-navy)]"
+        >
+          {n}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function LibraryTable({
   articles,
   selectedIds,
   onToggleSelected,
   onToggleAllOnPage,
   highlightedId = null,
+  dossierColumns = [],
+  dossierSectionLookup = {},
 }: Props) {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -196,7 +224,7 @@ export default function LibraryTable({
         className="overflow-x-auto overflow-y-auto border border-serif-border rounded-md bg-white"
         style={{ maxHeight: 'calc(100vh - 320px)' }}
       >
-        <table className="text-xs" style={{ minWidth: '3200px' }}>
+        <table className="text-xs" style={{ minWidth: `${3200 + dossierColumns.length * 110}px` }}>
           <thead className="sticky top-0 z-10 bg-serif-muted/95 backdrop-blur border-b border-serif-border">
             <tr>
               <th
@@ -277,6 +305,13 @@ export default function LibraryTable({
               <th className={headerCellBase} style={{ width: 80 }}>
                 <span className="uppercase tracking-[0.06em] text-[10px]">Obj Hand</span>
               </th>
+              {dossierColumns.map((col) => (
+                <th key={col.id} className={headerCellBase} style={{ width: 110 }}>
+                  <span className="uppercase tracking-[0.06em] text-[10px] whitespace-nowrap">
+                    {col.label}
+                  </span>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -434,6 +469,11 @@ export default function LibraryTable({
                   <td className={cellBase} style={{ width: 80 }}>
                     <LinkPillCell value={a.objection_handler_link} />
                   </td>
+                  {dossierColumns.map((col) => (
+                    <td key={col.id} className={cellBase} style={{ width: 110 }}>
+                      <DossierSectionCell numbers={dossierSectionLookup[col.id]?.[a.id] ?? []} />
+                    </td>
+                  ))}
                 </tr>
               );
             })}

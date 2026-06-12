@@ -21,6 +21,9 @@ import {
   linkArticle,
   unlinkArticle,
   flattenSectionTree,
+  GLOBAL_DOSSIER_ID,
+  globalSectionsWithContent,
+  adaptFromGlobal,
 } from '@/lib/dossier/store';
 import type { DossierSection, DossierStatus, DossierSummary } from '@/lib/dossier/types';
 
@@ -131,6 +134,11 @@ function DossierDetailContent() {
     reload();
   }
 
+  function handleAdaptFromGlobal(sectionId: string) {
+    adaptFromGlobal(dossierId, sectionId);
+    reload();
+  }
+
   // ── Tag modal save ──────────────────────────────────────────────────────────
 
   async function handleTagSave(added: string[], removed: string[]) {
@@ -150,6 +158,10 @@ function DossierDetailContent() {
   // ── Derived ─────────────────────────────────────────────────────────────────
 
   const flat = flattenSectionTree(sections);
+
+  // Section numbers Global has content for — drives the "Adapt from Global"
+  // affordance in the editor. Never offered on the Global dossier itself.
+  const adaptable = dossierId !== GLOBAL_DOSSIER_ID ? globalSectionsWithContent() : new Set<string>();
 
   const selectedSection = selectedSectionId
     ? flat.find((s) => s.id === selectedSectionId) ?? null
@@ -257,6 +269,8 @@ function DossierDetailContent() {
             onManageReferences={handleManageReferences}
             onSectionUpdate={handleSectionUpdate}
             onUnlinkArticle={handleUnlinkArticle}
+            adaptableSectionNumbers={adaptable}
+            onAdaptFromGlobal={handleAdaptFromGlobal}
           />
         </div>
       </div>

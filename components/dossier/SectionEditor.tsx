@@ -266,6 +266,11 @@ interface SectionEditorProps {
   onManageReferences: (section: DossierSection) => void;
   onSectionUpdate: (section: DossierSection) => void;
   onUnlinkArticle: (sectionId: string, libraryArticleId: string) => void;
+  /** Section numbers the Global dossier has content for (drives "Adapt from
+   *  Global"). Empty / undefined on the Global dossier itself. */
+  adaptableSectionNumbers?: Set<string>;
+  /** Copy Global's same-number content forward as a new version, then reload. */
+  onAdaptFromGlobal?: (sectionId: string) => void;
 }
 
 export function SectionEditor({
@@ -277,6 +282,8 @@ export function SectionEditor({
   onManageReferences,
   onSectionUpdate,
   onUnlinkArticle,
+  adaptableSectionNumbers,
+  onAdaptFromGlobal,
 }: SectionEditorProps) {
   // ── Guidance state ──────────────────────────────────────────────────────────
   const [guidance, setGuidance] = useState('');
@@ -378,6 +385,22 @@ export function SectionEditor({
     setViewingVersionId(isCurrent ? null : v.id);
     editor?.commands.setContent(v.content);
     setReasoningData(v.agentReasoning ?? null);
+  }
+
+  // ── Adapt from Global ─────────────────────────────────────────────────────────
+  // Delegates the store mutation to the parent (which copies Global's
+  // same-number content forward and reloads its tree), then refreshes the
+  // editor's own version state + canvas — the section id is unchanged so the
+  // section-change effect won't re-run on its own.
+  function handleAdaptFromGlobal() {
+    if (!section || !onAdaptFromGlobal) return;
+    onAdaptFromGlobal(section.id);
+    const versions = getContentVersions(dossierId, section.id) as SectionContent[];
+    setContentVersions(versions);
+    setViewingVersionId(null);
+    const current = versions.find((v) => v.isCurrent);
+    if (current && editor) editor.commands.setContent(current.content);
+    setReasoningData(current?.agentReasoning ?? null);
   }
 
   // ── Restore version ──────────────────────────────────────────────────────────
@@ -558,6 +581,13 @@ export function SectionEditor({
   const viewingVersion = viewingVersionId ? contentVersions.find((v) => v.id === viewingVersionId) : null;
   const isViewingOld = viewingVersionId !== null;
   const noArticles = (section?.articleLinks.length ?? 0) === 0;
+  // Offer "Adapt from Global" only when this section is empty (no content
+  // versions yet), Global has same-number content, and a handler is wired.
+  const canAdaptFromGlobal =
+    !!section &&
+    !!onAdaptFromGlobal &&
+    contentVersions.length === 0 &&
+    !!adaptableSectionNumbers?.has(section.number);
 
   if (!section) return <EmptyState />;
 
@@ -953,6 +983,25 @@ export function SectionEditor({
                   >
                     Visual
                   </button>
+
+                  {/* Adapt from Global — only when this section is empty and
+                      Global has same-number content to copy forward. */}
+                  {canAdaptFromGlobal && (
+                    <button
+                      type="button"
+                      onClick={handleAdaptFromGlobal}
+                      title="Copy the Global dossier's content for this section forward as a starting draft"
+                      className="px-3.5 py-2 rounded-[6px] text-xs font-medium font-mono transition-all duration-150 border disabled:opacity-40 flex items-center gap-1.5"
+                      style={{
+                        borderColor: 'var(--serif-accent)',
+                        color: 'var(--serif-accent)',
+                        backgroundColor: 'rgba(8,56,96,0.05)',
+                      }}
+                    >
+                      Adapt from Global
+                      <span aria-hidden="true">↓</span>
+                    </button>
+                  )}
 
                   {/* Save button — right side */}
                   <button

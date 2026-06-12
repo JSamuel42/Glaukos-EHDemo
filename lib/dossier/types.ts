@@ -13,6 +13,10 @@ export interface DossierSummary {
   libraryIndication: string;
   libraryProduct: string;
   title: string;
+  /** Portfolio label (e.g. 'Global', 'United Kingdom', 'Germany', 'Custom'). */
+  region: string;
+  /** Added in-session via "Add another" — reset on refresh. */
+  transient: boolean;
   status: DossierStatus;
   sectionCount: number;
   completedSections: number;

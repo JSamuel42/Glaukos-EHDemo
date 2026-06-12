@@ -242,11 +242,120 @@ export const GLAUCOMA_DOSSIER_SEED: StoredDossier = {
   id: DOSSIER_ID,
   libraryId: LIBRARY_ID,
   title: 'iStent infinite — Global Value Dossier: Open-Angle Glaucoma',
+  region: 'Global',
   status: 'draft',
   createdAt: CREATED_AT,
   updatedAt: NOW,
   sections,
 };
+
+// ─────────────────────────────────────────────────────────────────────────
+// Country dossiers (UK, Germany) — independent, pre-baked, adapted.
+//
+// Each clones the Global section tree (new ids), leaves most sections pending
+// (so Adapt-from-Global is offered where Global has content), keeps burden
+// (1.2) light/structural, and pre-bakes an ADAPTED epidemiology section
+// (1.2.1.1): a European-range opener (Gallo Afflitto 2022, #2) followed by a
+// local expansion weighting the country-specific records. iStent infinite is a
+// device, so local framing follows device HTA routes (UK: NICE MTEP/IP;
+// Germany: method evaluation / NUB).
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Clone the Global section tree into a country dossier with fresh ids. */
+function cloneCountrySections(
+  countryId: string,
+  prefix: string,
+  overrides: Record<string, { content?: StoredContentVersion; articleNumbers?: number[]; status?: StoredSection['status'] }>,
+): StoredSection[] {
+  return sections.map((s) => {
+    const newId = `${prefix}-${s.id}`;
+    const ov = overrides[s.number];
+    const linkSectionId = newId;
+    return {
+      id: newId,
+      dossierId: countryId,
+      parentSectionId: s.parentSectionId ? `${prefix}-${s.parentSectionId}` : null,
+      number: s.number,
+      title: s.title,
+      guidanceNotes: s.guidanceNotes,
+      // All cloned sections start pending (Adapt-from-Global offered where
+      // Global has content), unless an override sets the adapted epi to draft.
+      status: ov?.status ?? 'pending',
+      orderIndex: s.orderIndex,
+      articleLinks: ov?.articleNumbers
+        ? links(ov.articleNumbers, linkSectionId)
+        : [],
+      contentVersions: ov?.content ? [{ ...ov.content, sectionId: linkSectionId }] : [],
+      preGenerationNote: s.preGenerationNote,
+      createdAt: CREATED_AT,
+      updatedAt: NOW,
+    };
+  });
+}
+
+const UK_EPI_CONTENT = `<p>Open-angle glaucoma prevalence in the United Kingdom sits within the wider European range. A meta-analysis of European population-based studies estimated a pooled primary open-angle glaucoma prevalence of 2.60% (95% CI 1.90–3.56) in the adult population, rising with age and projected to grow as the population ages [#2]. This European range frames the UK denominator from which the surgical-eligible population is drawn.</p>
+
+<p>UK-specific evidence concentrates at the advanced, uncontrolled end of the funnel — the population most relevant to standalone surgical intervention. The Treatment of Advanced Glaucoma Study (TAGS), a UK multicentre randomised controlled trial of 453 adults with newly diagnosed advanced open-angle glaucoma, established that materially superior intraocular pressure control is required to hold vision-specific quality of life over five years (primary trabeculectomy 12.07 vs medical management 14.76 mmHg, with better visual-field preservation) [#10]. Complementing this, a UK clinical review of advanced-at-diagnosis disease characterises the patients who present late — asymptomatic raised pressure, no family history, social disadvantage, limited engagement with sight testing — and the disproportionate functional decline once bilateral field loss is established [#11]. Together these define a clearly bounded UK surgical-eligible population for whom durable, options-preserving intraocular pressure lowering is the central need. Local access is governed by NICE device routes (MTEP / Interventional Procedures).</p>`;
+
+const DE_EPI_CONTENT = `<p>Open-angle glaucoma prevalence in Germany sits within the European range. A meta-analysis of European population-based studies estimated a pooled primary open-angle glaucoma prevalence of 2.60% (95% CI 1.90–3.56), rising with age [#2]; a German minimally invasive glaucoma surgery review reports that approximately 1.4% of the German population aged 35–74 has glaucoma, anchoring the national denominator [#17].</p>
+
+<p>The local expansion draws on European cohort and screening evidence that bounds the diagnosed and uncontrolled tiers. The Thessaloniki Eye Study reported a 12-year cumulative open-angle glaucoma incidence of 4.4% (~0.37% per year) in an elderly European population, with only 11.1% of incident cases presenting with baseline intraocular pressure above 21 mmHg — underlining the limits of pressure-based case finding [#4]. The Malmö population screening programme showed that systematic case finding roughly halved the incidence of glaucoma-related blindness (0.17% screened vs 0.32%) and low vision (0.25% vs 0.53%) [#6], indicating a sizeable detectable, treatable population upstream of the surgical-eligible tier. The same German MIGS review situates iStent within the trabecular micro-bypass options available to this population [#17]. Local access follows German device routes (method evaluation / NUB).</p>`;
+
+function epiVersion(prefix: string, content: string, wordCount: number): StoredContentVersion {
+  return {
+    id: `${prefix}-sc-epi-v1`,
+    sectionId: '', // set by cloneCountrySections
+    content,
+    contentType: 'text',
+    version: 1,
+    isCurrent: true,
+    wordCount,
+    source: 'ai',
+    agentReasoning: {
+      reference_extractions: [],
+      guidance_coverage: [],
+      evidence_gaps: ['Country-specific surgical-eligible proportion is not directly reported; the local expansion characterises the uncontrolled/advanced tier from which it is drawn. ' + ABSTRACT_ONLY_NOTE],
+      consistency_notes: 'European prevalence range opens the section; country/regional records drive the local expansion.',
+      synthesis_approach: 'Global/European range up top, then local expansion weighting the country-specific records.',
+    },
+    createdAt: NOW,
+  };
+}
+
+export const UK_DOSSIER_SEED: StoredDossier = {
+  id: 'demo-dossier-istent-uk',
+  libraryId: LIBRARY_ID,
+  title: 'iStent infinite — Value Dossier: Open-Angle Glaucoma (United Kingdom)',
+  region: 'United Kingdom',
+  status: 'draft',
+  createdAt: CREATED_AT,
+  updatedAt: NOW,
+  sections: cloneCountrySections('uk', 'uk', {
+    // UK epi 1.2.1.1: main 38199528 (#10 King/TAGS) + 31740802 (#11 Kastner); supportive 35980843 (#2 Gallo Afflitto).
+    '1.2.1.1': { content: epiVersion('uk', UK_EPI_CONTENT, 230), articleNumbers: [2, 10, 11], status: 'draft' },
+  }),
+};
+
+export const DE_DOSSIER_SEED: StoredDossier = {
+  id: 'demo-dossier-istent-de',
+  libraryId: LIBRARY_ID,
+  title: 'iStent infinite — Value Dossier: Open-Angle Glaucoma (Germany)',
+  region: 'Germany',
+  status: 'draft',
+  createdAt: CREATED_AT,
+  updatedAt: NOW,
+  sections: cloneCountrySections('de', 'de', {
+    // Germany epi 1.2.1.1: main 39670502 (#17 Voykov); supportive 35980843 (#2), 34127627 (#4 Founti), 33823158 (#6 Aspberg).
+    '1.2.1.1': { content: epiVersion('de', DE_EPI_CONTENT, 250), articleNumbers: [2, 17, 4, 6], status: 'draft' },
+  }),
+};
+
+/** The pre-baked portfolio: Global, UK, Germany. */
+export const GLAUCOMA_DOSSIER_SEEDS: StoredDossier[] = [
+  GLAUCOMA_DOSSIER_SEED,
+  UK_DOSSIER_SEED,
+  DE_DOSSIER_SEED,
+];
 
 /** Per-dossier writing context (Context Manager) seed. */
 export const GLAUCOMA_DOSSIER_CONTEXT = {
