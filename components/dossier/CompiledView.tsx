@@ -197,8 +197,8 @@ export function CompiledView({ dossier, sections, onClose }: CompiledViewProps) 
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {/* Sign-off legend — role-based approval is illustrative, not enforced */}
-          <div className="hidden md:flex items-center gap-2 mr-1" title="Section sign-off — role-based approval is illustrative, not enforced in this demo.">
+          {/* Status legend — role-based approval is illustrative, not enforced */}
+          <div className="hidden md:flex items-center gap-2 mr-1" title="Section status — role-based approval is illustrative, not enforced in this demo.">
             {SIGNOFF_ORDER.map((st) => {
               const m = SIGNOFF_META[st];
               return (
@@ -274,7 +274,7 @@ export function CompiledView({ dossier, sections, onClose }: CompiledViewProps) 
                     {section.title}
                   </SectionHeading>
 
-                  {/* Sign-off badge — highest state reached */}
+                  {/* Status badge — highest state reached */}
                   {section.currentContent && (() => {
                     const meta = SIGNOFF_META[signOffState(section.signOff)];
                     return (

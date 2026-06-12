@@ -26,9 +26,9 @@ export function signOffState(s?: SignOff | null): SignOffState {
 }
 
 export const SIGNOFF_META: Record<SignOffState, { label: string; bg: string; color: string }> = {
-  'ai-draft':        { label: 'AI draft',          bg: 'var(--serif-muted)',      color: 'var(--serif-muted-foreground)' },
-  'human-verified':  { label: 'Human verified',    bg: 'rgba(24,95,165,0.12)',    color: '#185FA5' },
-  'gvd-approved':    { label: 'GVD lead approved', bg: 'rgba(15,110,86,0.12)',    color: '#0F6E56' },
+  'ai-draft':        { label: 'AI Draft',          bg: 'var(--serif-muted)',      color: 'var(--serif-muted-foreground)' },
+  'human-verified':  { label: 'Human Verified',    bg: 'rgba(24,95,165,0.12)',    color: '#185FA5' },
+  'gvd-approved':    { label: 'GVD Lead approved', bg: 'rgba(15,110,86,0.12)',    color: '#0F6E56' },
 };
 
 /** Ordered states for legends. */

@@ -212,7 +212,7 @@ function DossierDetailContent() {
       const guidance = (selectedSection.guidanceNotes ?? '').slice(0, 160);
       ctx +=
         `Selected section: ${selectedSection.number} ${selectedSection.title} ` +
-        `[status: ${selectedSection.status}; sign-off: ${signOff}]. ` +
+        `[workflow: ${selectedSection.status}; status: ${signOff}]. ` +
         `Linked references: ${selectedSection.articleLinks.length}.` +
         (guidance ? ` Guidance: ${guidance}.` : '');
     } else {

@@ -123,7 +123,7 @@ function SignOffToggle({ label, role, on, onClick }: SignOffToggleProps) {
       type="button"
       onClick={onClick}
       aria-pressed={on}
-      title={`${label} — ${role} sign-off (role-based access illustrative, not enforced)`}
+      title={`${label} — ${role} status (role-based access illustrative, not enforced)`}
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[5px] border text-[11px] font-mono transition-all duration-100"
       style={{
         borderColor: on ? 'var(--serif-accent)' : 'var(--serif-border)',
@@ -1620,12 +1620,10 @@ export function SectionEditor({
               )}
             </div>
 
-            {/* ── Status slot (reserved for Audit+Fix 3) ──────────────────────
-                The sign-off control below is the reserved slot beneath
-                Revise/Save; Audit+Fix 3 relabels it to "Status". */}
-
-            {/* Sign-off control — 2 cumulative toggles (AI draft → Human
-                verified → GVD lead approved). RBAC is illustrative, not built. */}
+            {/* ── Status control — sits under the Revise/Save row ─────────────
+                Relabelled from "Sign-off" in Audit+Fix 3. Two cumulative
+                toggles: AI Draft → Human Verified → GVD Lead approved. RBAC is
+                illustrative, not built. State logic unchanged. */}
             {(() => {
               const so = section.signOff ?? { humanVerified: false, gvdApproved: false };
               const state = signOffState(so);
@@ -1636,7 +1634,7 @@ export function SectionEditor({
                   style={{ borderColor: 'var(--serif-border)', backgroundColor: 'var(--serif-card)' }}
                 >
                   <span className="font-mono text-[9px] font-medium tracking-[0.12em] uppercase" style={{ color: 'var(--serif-muted-foreground)' }}>
-                    Sign-off
+                    Status
                   </span>
                   <span
                     className="font-mono text-[9px] font-medium tracking-[0.08em] uppercase px-2 py-0.5 rounded-[3px]"
@@ -1646,7 +1644,7 @@ export function SectionEditor({
                   </span>
 
                   <SignOffToggle
-                    label="Human verified"
+                    label="Human Verified"
                     role={SIGNOFF_ROLE['human-verified']}
                     on={so.humanVerified}
                     onClick={() => {
@@ -1655,7 +1653,7 @@ export function SectionEditor({
                     }}
                   />
                   <SignOffToggle
-                    label="GVD lead approved"
+                    label="GVD Lead approved"
                     role={SIGNOFF_ROLE['gvd-approved']}
                     on={so.gvdApproved}
                     onClick={() => {
