@@ -2,15 +2,23 @@
   "products": [
     {
       "group": "Non-specific",
-      "children": ["Non-specific"]
+      "children": [
+        "Non-specific"
+      ]
     },
     {
       "group": "Multiple",
-      "children": ["Multiple"]
+      "children": [
+        "Multiple"
+      ]
     }
   ],
-  "indications": ["Open-Angle Glaucoma"],
-  "pub_types": ["Manuscript"],
+  "indications": [
+    "Open-Angle Glaucoma"
+  ],
+  "pub_types": [
+    "Manuscript"
+  ],
   "study_types": [
     "SLR / TLR",
     "RWE",
@@ -29,7 +37,10 @@
     "South Korea",
     "India"
   ],
-  "sponsors": [],
+  "sponsors": [
+    "Academia",
+    "Industry"
+  ],
   "funnel_levels": [
     "L1 Disease overview",
     "L2 General prevalence/incidence",
@@ -47,19 +58,28 @@
   "categories": [
     {
       "category": "Burden - Clinical",
-      "subcategories": ["Epidemiology", "Morbidity / Mortality"]
+      "subcategories": [
+        "Epidemiology",
+        "Morbidity / Mortality"
+      ]
     },
     {
       "category": "Burden - Humanistic",
-      "subcategories": ["COA / PROs"]
+      "subcategories": [
+        "COA / PROs"
+      ]
     },
     {
       "category": "Burden - Socioeconomic",
-      "subcategories": ["Direct costs"]
+      "subcategories": [
+        "Direct costs"
+      ]
     },
     {
       "category": "Management",
-      "subcategories": ["Treatment patterns"]
+      "subcategories": [
+        "Treatment patterns"
+      ]
     }
   ]
 }

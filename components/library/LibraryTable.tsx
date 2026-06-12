@@ -8,6 +8,8 @@ import type { Article } from '@/lib/library/data';
 import { cn } from '@/lib/cn';
 import TruncatedCell from './TruncatedCell';
 import PillList from './PillList';
+import ValuePill from './ValuePill';
+import AdminEditable from './AdminEditable';
 
 interface Props {
   articles: Article[];
@@ -25,7 +27,27 @@ interface Props {
   dossierColumns?: { id: string; label: string }[];
   /** dossierId → articleId → linked section numbers (e.g. ['1.2', '1.2.1']). */
   dossierSectionLookup?: Record<string, Record<string, string[]>>;
+  /** Admin mode — when true, editable cells become inline-editable and dossier
+   *  cells become clickable to open the tag-to-section modal. */
+  isAdminMode?: boolean;
+  /** Commit an inline edit of a single article field (admin mode). */
+  onEditField?: (id: string, field: EditableField, value: string) => void;
+  /** Open the tag-to-dossier-section modal for an article × dossier (admin mode). */
+  onTagDossier?: (article: Article, dossierId: string) => void;
 }
+
+/** Free-text Article fields editable inline in admin mode. */
+type EditableField =
+  | 'title'
+  | 'product_display'
+  | 'authors'
+  | 'journal'
+  | 'pub_type'
+  | 'study_type'
+  | 'geography'
+  | 'sponsor'
+  | 'population'
+  | 'interventions';
 
 type SortKey =
   | 'id'
@@ -160,7 +182,12 @@ export default function LibraryTable({
   highlightedId = null,
   dossierColumns = [],
   dossierSectionLookup = {},
+  isAdminMode = false,
+  onEditField,
+  onTagDossier,
 }: Props) {
+  const edit = (id: string, field: EditableField) => (value: string) =>
+    onEditField?.(id, field, value);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
@@ -228,7 +255,7 @@ export default function LibraryTable({
         className="overflow-x-auto overflow-y-auto border border-serif-border rounded-md bg-white"
         style={{ maxHeight: 'calc(100vh - 320px)' }}
       >
-        <table className="text-xs" style={{ minWidth: `${3200 + dossierColumns.length * 110}px` }}>
+        <table className="text-xs" style={{ minWidth: `${2800 + dossierColumns.length * 110}px` }}>
           <thead className="sticky top-0 z-10 bg-serif-muted/95 backdrop-blur border-b border-serif-border">
             <tr>
               <th
@@ -276,9 +303,6 @@ export default function LibraryTable({
               <th className={headerCellBase} style={{ width: 110 }}>
                 {renderSortHeader('study_type', 'Study type')}
               </th>
-              <th className={headerCellBase} style={{ width: 180 }}>
-                <span className="uppercase tracking-[0.06em] text-[10px]">Study design</span>
-              </th>
               <th className={headerCellBase} style={{ width: 130 }}>
                 {renderSortHeader('geography', 'Geography')}
               </th>
@@ -290,9 +314,6 @@ export default function LibraryTable({
               </th>
               <th className={headerCellBase} style={{ width: 220 }}>
                 <span className="uppercase tracking-[0.06em] text-[10px]">Interventions</span>
-              </th>
-              <th className={headerCellBase} style={{ width: 220 }}>
-                <span className="uppercase tracking-[0.06em] text-[10px]">Key Outcomes</span>
               </th>
               <th className={headerCellBase} style={{ width: 180 }}>
                 <span className="uppercase tracking-[0.06em] text-[10px]">Category</span>
@@ -385,7 +406,9 @@ export default function LibraryTable({
                     )}
                   </td>
                   <td className={cellBase} style={{ width: 160 }}>
-                    <TruncatedCell text={a.product_display} lineClamp={2} />
+                    <AdminEditable enabled={isAdminMode} value={a.product_display ?? ''} onCommit={edit(a.id, 'product_display')}>
+                      <TruncatedCell text={a.product_display} lineClamp={2} />
+                    </AdminEditable>
                   </td>
                   <td className={cellBase} style={{ width: 90 }}>
                     {a.indication ? (
@@ -395,24 +418,31 @@ export default function LibraryTable({
                           backgroundColor: 'rgba(175,169,236,0.25)',
                           color: 'var(--evhub-navy)',
                         }}
+                        title={a.indication}
                       >
-                        {a.indication}
+                        OAG
                       </span>
                     ) : (
                       <span className="text-serif-muted-foreground">—</span>
                     )}
                   </td>
                   <td className={cellBase} style={{ width: 360 }}>
-                    <TruncatedCell text={a.title} lineClamp={2} />
+                    <AdminEditable enabled={isAdminMode} value={a.title ?? ''} multiline onCommit={edit(a.id, 'title')}>
+                      <TruncatedCell text={a.title} lineClamp={2} />
+                    </AdminEditable>
                   </td>
                   <td
                     className={cn(cellBase, 'text-serif-muted-foreground')}
                     style={{ width: 110 }}
                   >
-                    <TruncatedCell text={a.authors} lineClamp={2} />
+                    <AdminEditable enabled={isAdminMode} value={a.authors ?? ''} multiline onCommit={edit(a.id, 'authors')}>
+                      <TruncatedCell text={a.authors} lineClamp={2} />
+                    </AdminEditable>
                   </td>
                   <td className={cellBase} style={{ width: 200 }}>
-                    <TruncatedCell text={a.journal} lineClamp={2} />
+                    <AdminEditable enabled={isAdminMode} value={a.journal ?? ''} onCommit={edit(a.id, 'journal')}>
+                      <TruncatedCell text={a.journal} lineClamp={2} />
+                    </AdminEditable>
                   </td>
                   <td
                     className={cn(cellBase, 'text-serif-muted-foreground tabular-nums whitespace-nowrap')}
@@ -435,28 +465,34 @@ export default function LibraryTable({
                     )}
                   </td>
                   <td className={cn(cellBase, 'whitespace-nowrap')} style={{ width: 110 }}>
-                    {a.pub_type ?? <span className="text-serif-muted-foreground">—</span>}
+                    <AdminEditable enabled={isAdminMode} value={a.pub_type ?? ''} onCommit={edit(a.id, 'pub_type')}>
+                      {a.pub_type ?? <span className="text-serif-muted-foreground">—</span>}
+                    </AdminEditable>
                   </td>
                   <td className={cn(cellBase, 'whitespace-nowrap')} style={{ width: 110 }}>
-                    {a.study_type ?? <span className="text-serif-muted-foreground">—</span>}
-                  </td>
-                  <td className={cellBase} style={{ width: 180 }}>
-                    <TruncatedCell text={a.study_design} lineClamp={2} />
+                    <AdminEditable enabled={isAdminMode} value={a.study_type ?? ''} onCommit={edit(a.id, 'study_type')}>
+                      <ValuePill value={a.study_type} />
+                    </AdminEditable>
                   </td>
                   <td className={cn(cellBase, 'whitespace-nowrap')} style={{ width: 130 }}>
-                    {a.geography ?? <span className="text-serif-muted-foreground">—</span>}
+                    <AdminEditable enabled={isAdminMode} value={a.geography ?? ''} onCommit={edit(a.id, 'geography')}>
+                      <ValuePill value={a.geography} />
+                    </AdminEditable>
                   </td>
                   <td className={cn(cellBase, 'whitespace-nowrap')} style={{ width: 110 }}>
-                    {a.sponsor ?? <span className="text-serif-muted-foreground">—</span>}
+                    <AdminEditable enabled={isAdminMode} value={a.sponsor ?? ''} onCommit={edit(a.id, 'sponsor')}>
+                      <ValuePill value={a.sponsor} />
+                    </AdminEditable>
                   </td>
                   <td className={cellBase} style={{ width: 220 }}>
-                    <TruncatedCell text={a.population} lineClamp={2} />
+                    <AdminEditable enabled={isAdminMode} value={a.population ?? ''} multiline onCommit={edit(a.id, 'population')}>
+                      <TruncatedCell text={a.population} lineClamp={2} />
+                    </AdminEditable>
                   </td>
                   <td className={cellBase} style={{ width: 220 }}>
-                    <TruncatedCell text={a.interventions} lineClamp={2} />
-                  </td>
-                  <td className={cellBase} style={{ width: 220 }}>
-                    <TruncatedCell text={a.outcomes} lineClamp={2} />
+                    <AdminEditable enabled={isAdminMode} value={a.interventions ?? ''} multiline onCommit={edit(a.id, 'interventions')}>
+                      <TruncatedCell text={a.interventions} lineClamp={2} />
+                    </AdminEditable>
                   </td>
                   <td className={cellBase} style={{ width: 180 }}>
                     <PillList values={categoryParentList(a)} variant="category" maxVisible={3} />
@@ -473,11 +509,38 @@ export default function LibraryTable({
                   <td className={cellBase} style={{ width: 80 }}>
                     <LinkPillCell value={a.objection_handler_link} />
                   </td>
-                  {dossierColumns.map((col) => (
-                    <td key={col.id} className={cellBase} style={{ width: 110 }}>
-                      <DossierSectionCell numbers={dossierSectionLookup[col.id]?.[a.id] ?? []} dossierId={col.id} />
-                    </td>
-                  ))}
+                  {dossierColumns.map((col) => {
+                    const nums = dossierSectionLookup[col.id]?.[a.id] ?? [];
+                    return (
+                      <td key={col.id} className={cellBase} style={{ width: 110 }}>
+                        {isAdminMode ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onTagDossier?.(a, col.id);
+                            }}
+                            title={`Tag to ${col.label} dossier sections`}
+                            className="flex flex-wrap items-center gap-1 w-full text-left rounded-sm px-0.5 -mx-0.5 hover:bg-[rgba(93,202,165,0.12)] hover:outline-dashed hover:outline-1 hover:outline-[color:var(--evhub-mint)] transition-colors"
+                          >
+                            {nums.length > 0 ? (
+                              nums.map((n) => (
+                                <span
+                                  key={n}
+                                  className="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-[rgba(8,56,96,0.08)] text-[color:var(--evhub-navy)]"
+                                >
+                                  {n}
+                                </span>
+                              ))
+                            ) : null}
+                            <span className="text-[10px] font-semibold text-[color:var(--evhub-mint)]">+ tag</span>
+                          </button>
+                        ) : (
+                          <DossierSectionCell numbers={nums} dossierId={col.id} />
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
               );
             })}

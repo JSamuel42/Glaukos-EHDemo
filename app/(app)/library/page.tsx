@@ -2,9 +2,11 @@
 
 import { Suspense, useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search, Sparkles, CalendarClock, Clock, FileText } from 'lucide-react';
+import { Search, Sparkles, CalendarClock, Clock, FileText, Pencil } from 'lucide-react';
 import { type Article } from '@/lib/library/data';
 import { useLibraryStore } from '@/lib/library/store';
+import { useAdminMode } from '@/lib/admin/AdminModeContext';
+import DossierTagModal from '@/components/library/DossierTagModal';
 import {
   EMPTY_FILTERS,
   applyFilters,
@@ -21,13 +23,29 @@ import FilterToolbar from '@/components/library/FilterToolbar';
 import LibraryTable from '@/components/library/LibraryTable';
 import Pagination from '@/components/library/Pagination';
 import { seedDossierDemo } from '@/lib/dossier/seed';
-import { listDossiers, getArticleSectionNumbers } from '@/lib/dossier/store';
+import {
+  listDossiers,
+  getArticleSectionNumbers,
+  getDossierSections,
+  flattenSectionTree,
+  linkArticle,
+  unlinkArticle,
+  getArticleNumber,
+} from '@/lib/dossier/store';
 import { cn } from '@/lib/cn';
 
 /** Shorten verbose region labels so the dossier columns stay narrow. */
 function shortenRegion(region: string): string {
   if (region === 'United Kingdom') return 'UK';
   return region;
+}
+
+/** Section IDs an article is currently linked to within a given dossier —
+ *  seeds the tag modal's checkbox state. */
+function linkedSectionIdsFor(dossierId: string, articleId: string): string[] {
+  return flattenSectionTree(getDossierSections(dossierId))
+    .filter((s) => s.articleLinks.some((l) => l.libraryArticleId === articleId))
+    .map((s) => s.id);
 }
 
 const PAGE_SIZE = 50;
@@ -112,7 +130,15 @@ function LibraryPageInner() {
     Record<string, Record<string, string[]>>
   >({});
 
-  const { allArticles } = useLibraryStore();
+  const { allArticles, updateArticleField } = useLibraryStore();
+  const { isAdminMode, toggleAdminMode } = useAdminMode();
+
+  // Admin-mode tag-to-section modal target (article × dossier), null when closed.
+  const [tagTarget, setTagTarget] = useState<{
+    article: Article;
+    dossierId: string;
+    label: string;
+  } | null>(null);
 
   const searchParams = useSearchParams();
   const targetArticleId = searchParams?.get('article') ?? null;
@@ -155,10 +181,11 @@ function LibraryPageInner() {
   // and the article→section-number lookup that powers the dossier-section
   // columns appended to the table. Recomputed on mount / when the article set
   // changes — the synchronous state sync off an external store is intended.
-  useEffect(() => {
-    seedDossierDemo();
+  // Build the per-dossier columns + article→section-number lookup from the
+  // in-memory dossier store. Extracted so admin-mode tagging can refresh the
+  // table cells immediately after linking/unlinking.
+  const refreshDossierData = useCallback(() => {
     const dossiers = listDossiers();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDossierColumns(dossiers.map((d) => ({ id: d.id, label: shortenRegion(d.region) })));
 
     const lookup: Record<string, Record<string, string[]>> = {};
@@ -172,6 +199,11 @@ function LibraryPageInner() {
     }
     setDossierSectionLookup(lookup);
   }, [allArticles]);
+
+  useEffect(() => {
+    seedDossierDemo();
+    refreshDossierData();
+  }, [refreshDossierData]);
 
   const filtered = useMemo(() => applyFilters(allArticles, filterState), [allArticles, filterState]);
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -324,6 +356,22 @@ function LibraryPageInner() {
       <div className="flex items-baseline justify-between mb-5 gap-4">
         <h1 className="font-playfair text-3xl text-serif-foreground">Library</h1>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleAdminMode}
+            aria-pressed={isAdminMode}
+            title={isAdminMode ? 'Exit admin mode' : 'Enter admin mode — edit cells & tag publications to dossier sections'}
+            className={cn(
+              'inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-semibold transition-colors',
+              isAdminMode
+                ? 'text-white'
+                : 'border border-serif-border bg-white text-serif-muted-foreground hover:text-serif-foreground',
+            )}
+            style={isAdminMode ? { backgroundColor: 'var(--evhub-navy)' } : undefined}
+          >
+            <Pencil size={13} className={isAdminMode ? 'text-[color:var(--evhub-mint)]' : undefined} />
+            <span>Admin</span>
+          </button>
           {showSummarise && (
             <button
               type="button"
@@ -427,7 +475,32 @@ function LibraryPageInner() {
         highlightedId={highlightedId}
         dossierColumns={dossierColumns}
         dossierSectionLookup={dossierSectionLookup}
+        isAdminMode={isAdminMode}
+        onEditField={updateArticleField}
+        onTagDossier={(article, dossierId) => {
+          const label = dossierColumns.find((c) => c.id === dossierId)?.label ?? 'dossier';
+          setTagTarget({ article, dossierId, label });
+        }}
       />
+
+      {tagTarget && (
+        <DossierTagModal
+          article={{
+            id: tagTarget.article.id,
+            title: tagTarget.article.title ?? tagTarget.article.id,
+            number: getArticleNumber(tagTarget.article.id),
+          }}
+          dossierLabel={tagTarget.label}
+          sections={getDossierSections(tagTarget.dossierId)}
+          linkedSectionIds={linkedSectionIdsFor(tagTarget.dossierId, tagTarget.article.id)}
+          onSave={(added, removed) => {
+            for (const sid of added) linkArticle(tagTarget.dossierId, sid, tagTarget.article.id);
+            for (const sid of removed) unlinkArticle(tagTarget.dossierId, sid, tagTarget.article.id);
+            refreshDossierData();
+          }}
+          onClose={() => setTagTarget(null)}
+        />
+      )}
 
       <Pagination
         page={page}

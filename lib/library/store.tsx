@@ -26,21 +26,40 @@ export interface PushResult {
   addedIds: string[];
 }
 
+/** Free-text Article fields editable inline in admin mode. */
+type EditableField =
+  | 'title'
+  | 'product_display'
+  | 'authors'
+  | 'journal'
+  | 'pub_type'
+  | 'study_type'
+  | 'geography'
+  | 'sponsor'
+  | 'population'
+  | 'interventions';
+
 interface LibraryStoreValue {
   /** Runtime-pushed articles (session only), newest first. */
   pushedArticles: Article[];
-  /** Static + pushed, pushed first so new articles surface at the top. */
+  /** Static + pushed (with admin edits applied), pushed first so new articles surface at the top. */
   allArticles: Article[];
   /** Set of PMIDs/ids currently in the Library (static + pushed). */
   existingKeys: Set<string>;
   /** Append articles, skipping any whose PMID/id is already present. */
   pushArticles: (articles: Article[]) => PushResult;
+  /** Admin-mode inline edit — overlay a single field value for one article
+   *  (session only, lossy on refresh). */
+  updateArticleField: (id: string, field: EditableField, value: string) => void;
 }
 
 const LibraryStoreContext = createContext<LibraryStoreValue | null>(null);
 
 export function LibraryStoreProvider({ children }: { children: React.ReactNode }) {
   const [pushedArticles, setPushedArticles] = useState<Article[]>([]);
+  // Admin-mode field overrides: articleId → { field → value }. Applied on top
+  // of the static + pushed sets. Session-only, reset on refresh.
+  const [edits, setEdits] = useState<Record<string, Partial<Article>>>({});
 
   const existingKeys = useMemo(() => {
     const s = new Set<string>(ARTICLES.map(keyOf));
@@ -48,9 +67,17 @@ export function LibraryStoreProvider({ children }: { children: React.ReactNode }
     return s;
   }, [pushedArticles]);
 
-  const allArticles = useMemo(
-    () => [...pushedArticles, ...ARTICLES],
-    [pushedArticles],
+  const allArticles = useMemo(() => {
+    const merged = [...pushedArticles, ...ARTICLES];
+    if (Object.keys(edits).length === 0) return merged;
+    return merged.map(a => (edits[a.id] ? { ...a, ...edits[a.id] } : a));
+  }, [pushedArticles, edits]);
+
+  const updateArticleField = useCallback(
+    (id: string, field: EditableField, value: string) => {
+      setEdits(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+    },
+    [],
   );
 
   const pushArticles = useCallback((articles: Article[]): PushResult => {
@@ -83,8 +110,8 @@ export function LibraryStoreProvider({ children }: { children: React.ReactNode }
   }, [pushedArticles]);
 
   const value = useMemo<LibraryStoreValue>(
-    () => ({ pushedArticles, allArticles, existingKeys, pushArticles }),
-    [pushedArticles, allArticles, existingKeys, pushArticles],
+    () => ({ pushedArticles, allArticles, existingKeys, pushArticles, updateArticleField }),
+    [pushedArticles, allArticles, existingKeys, pushArticles, updateArticleField],
   );
 
   return (
