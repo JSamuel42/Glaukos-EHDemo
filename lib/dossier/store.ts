@@ -23,6 +23,7 @@ import type {
   CreateSectionInput,
   SectionStatus,
   DossierStatus,
+  VisualSpec,
 } from '@/lib/dossier/types';
 import { ARTICLES, type Article } from '@/lib/library/data';
 
@@ -76,6 +77,8 @@ export interface StoredContentVersion {
   agentReasoning?: AgentReasoning;
   /** SN/VS ids that grounded this version (Phase 5.6). */
   evidenceInputs?: { snIds: string[]; vsIds: string[] };
+  /** Visual payload for `contentType: 'visual'` versions (Audit+Fix 2). */
+  visual?: VisualSpec;
   createdAt: string;
 }
 
@@ -572,6 +575,7 @@ export interface SaveContentInput {
   source: ContentSource;
   agentReasoning?: AgentReasoning;
   evidenceInputs?: { snIds: string[]; vsIds: string[] };
+  visual?: VisualSpec;
 }
 
 /** Save a new content version (max 3). Returns the new version entry. */
@@ -608,6 +612,7 @@ export function saveContentVersion(
     source: input.source,
     agentReasoning: input.agentReasoning,
     evidenceInputs: input.evidenceInputs,
+    visual: input.visual,
     createdAt: new Date().toISOString(),
   };
 

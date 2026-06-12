@@ -51,6 +51,29 @@ function version(
   };
 }
 
+/** Pre-baked visual version (Audit+Fix 2) — funnel/SVG rendered, JSON never shown. */
+function visualVersion(
+  id: string,
+  sectionId: string,
+  createdAt: string,
+  introHtml: string,
+  visual: StoredContentVersion['visual'],
+): StoredContentVersion {
+  return {
+    id, sectionId, content: introHtml, contentType: 'visual', version: 1,
+    isCurrent: true, wordCount: introHtml.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length,
+    source: 'ai', createdAt, visual,
+  };
+}
+
+/**
+ * Pre-baked showcase funnel for the Epidemiology section — the open-angle
+ * glaucoma disease funnel narrowing to the surgical-eligible (MIGS) subset.
+ * Values are illustrative, funnel-based estimates anchored on the linked
+ * abstract-only prevalence evidence; the notes flag where a tier is inferred.
+ */
+const FUNNEL_INTRO = '<p>Illustrative open-angle glaucoma disease funnel, narrowing from general prevalence to the standalone surgical-eligible (MIGS) subset. Tiers are funnel-based estimates anchored on the linked prevalence evidence [#1][#2][#3]; the surgical-eligible proportion is inferred and flagged accordingly.</p>';
+
 // ── Pre-baked content ───────────────────────────────────────────────────────
 
 const PREVALENCE_CONTENT = `<p>Open-angle glaucoma exerts a substantial and progressively expanding global burden, driven principally by population ageing and an asymptomatic clinical course that allows disease to accumulate before diagnosis. A systematic review and meta-analysis of prospective cohorts quantified this trajectory directly: in 2022, the global incidence of primary open-angle glaucoma stood at 23.46 (95% CI 15.68–32.91) new cases per 10,000 person-years among adults aged 40–79, with an age-specific gradient that intensifies sharply across the seventh and eighth decades — from 5.51 per 10,000 at 40–44 years to 64.36 per 10,000 at 75–79 years [#1]. The pooled annual cumulative incidence of 0.21% indicates that for every five hundred unaffected adults in this age band, approximately one transitions to incident disease each year, and the burden is most concentrated in low sociodemographic-index regions and in Africa, where access to case finding compounds the underlying biological gradient. Elevated intraocular pressure, family history, myopia and advancing age were identified as the principal risk modifiers [#1].</p>
@@ -96,7 +119,21 @@ const sections: StoredSection[] = [
     id: 'demo-gla-sec-13', dossierId: DOSSIER_ID, parentSectionId: 'demo-gla-sec-12',
     number: '1.2.1', title: 'Epidemiology', status: 'draft', orderIndex: 0,
     guidanceNotes: '• General and diagnosed prevalence across major markets\n• Patient funnel: prevalence → diagnosed → treated → uncontrolled → surgical-eligible\n• Size the addressable MIGS population where the evidence allows',
-    articleLinks: [], contentVersions: [], createdAt: CREATED_AT, updatedAt: NOW,
+    articleLinks: links([1, 2, 3], 'demo-gla-sec-13'),
+    contentVersions: [
+      visualVersion('sc-gla-13-v1', 'demo-gla-sec-13', '2026-05-29T14:15:00Z', FUNNEL_INTRO, {
+        kind: 'funnel',
+        title: 'Open-angle glaucoma disease funnel → MIGS-eligible',
+        levels: [
+          { label: 'General prevalence (40–79)', value: 76000000, note: 'Global POAG, illustrative' },
+          { label: 'Diagnosed', value: 38000000, note: '≈ half undiagnosed' },
+          { label: 'Treated', value: 26000000, note: 'On IOP-lowering therapy' },
+          { label: 'Uncontrolled / advanced', value: 7000000, note: 'Inadequate IOP control or progressing' },
+          { label: 'Surgical-eligible (MIGS)', value: 2500000, note: 'Inferred — not directly reported' },
+        ],
+      }),
+    ],
+    createdAt: CREATED_AT, updatedAt: NOW,
   },
   {
     id: 'demo-gla-sec-131', dossierId: DOSSIER_ID, parentSectionId: 'demo-gla-sec-13',

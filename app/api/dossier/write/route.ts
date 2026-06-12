@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest } from 'next/server';
 import { ANTHROPIC_API_KEY } from '@/lib/env';
+import { sanitizeSvg } from '@/lib/dossier/sanitizeSvg';
+import type { VisualSpec } from '@/lib/dossier/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,6 +31,9 @@ interface SnInput { id: string; pillar: string; text: string }
 /** Payer Value Story message supplied as an internal synthesis input. */
 interface VsInput { id: string; domain: string; headline: string; text: string; strength: string }
 
+/** A turn in the Table/Visual clarification exchange (Audit+Fix 2). */
+interface ClarifyTurn { role: 'assistant' | 'user'; text: string }
+
 interface WriteRequest {
   sectionId: string;
   sectionNumber: string;
@@ -44,6 +49,19 @@ interface WriteRequest {
   /** Phase 5.6: internal synthesis inputs (read-only drafting aids). */
   snStatements?: SnInput[];
   vsMessages?: VsInput[];
+  /**
+   * Audit+Fix 2 — request mode:
+   *  - 'draft'   (default): stream text/table HTML (existing behaviour)
+   *  - 'clarify': one conversational clarification turn for Table/Visual
+   *  - 'visual':  produce a visual JSON spec (funnel) or sanitised raw SVG
+   */
+  mode?: 'draft' | 'clarify' | 'visual';
+  /** Existing draft HTML, fed back in for a Revise (refine) pass. */
+  reviseFrom?: string;
+  /** Plain-text current draft — grounds Table/Visual clarification + generation. */
+  textDraft?: string;
+  /** Clarification transcript so far (mode 'clarify' / 'visual'). */
+  messages?: ClarifyTurn[];
 }
 
 // ── System prompt — verbatim STRICT RULES / STYLE; output format adapted for
@@ -94,6 +112,52 @@ REQUIRED OUTPUT FORMAT — output in exactly two parts:
     "synthesis_approach": "<brief description>"
   }
 }`;
+
+// ── Clarification + visual prompts (Audit+Fix 2) ─────────────────────────────
+
+const SUPPORTED_VISUALS =
+  'Supported visual types in this build: (1) a disease/patient funnel, and (2) simple SVG charts or diagrams (e.g. a basic bar chart or a labelled schematic). Forest plots, Kaplan–Meier curves, interactive charts, and image-based figures are NOT supported.';
+
+const CLARIFY_TABLE_SYSTEM = `You are a scientific writing assistant helping a medical writer specify an evidence TABLE for a Global Value Dossier section, grounded ONLY on the section's existing text draft and its linked abstract-only references.
+
+Your job in this turn is to ask ONE concise, focused clarifying question (not a list) to pin down the table: its columns, the rows/grouping, whether it needs a header, and the depth of content. If the writer has already given enough detail across the conversation, reply with a single short confirmation line beginning "READY:" that restates the agreed table shape in one sentence. Keep every reply under 50 words. Never write the table itself here. Do not invent evidence beyond the references.`;
+
+const CLARIFY_VISUAL_SYSTEM = `You are a scientific writing assistant helping a medical writer specify a VISUAL for a Global Value Dossier section, grounded ONLY on the section's existing text draft and its linked abstract-only references.
+
+${SUPPORTED_VISUALS}
+
+Your job in this turn is to ask ONE concise clarifying question (not a list) to pin down the visual type and its scope/levels/labels. If the writer requests an UNSUPPORTED type, say plainly that it is not available in the current build and offer the supported alternatives — do not pretend to produce it. If enough detail has been gathered, reply with a single short line beginning "READY:" restating the agreed visual in one sentence. Keep every reply under 50 words. Never output JSON or SVG here. Do not invent evidence beyond the references.`;
+
+const VISUAL_SYSTEM = `You are a scientific visualisation agent for a Global Value Dossier. Using ONLY the section's text draft and linked abstract-only references, produce ONE visual as a single JSON object and nothing else (no prose, no code fences).
+
+${SUPPORTED_VISUALS}
+
+Output exactly one JSON object in one of these two shapes:
+- Funnel: {"introHtml":"<p>…short caption…</p>","visual":{"kind":"funnel","title":"…","levels":[{"label":"…","value":<number>,"note":"…optional…"}, …]}}
+- Raw SVG: {"introHtml":"<p>…short caption…</p>","visual":{"kind":"svg","title":"…","svg":"<svg viewBox=…>…</svg>"}}
+
+Rules:
+- Prefer a funnel when the data describes a narrowing population/cascade; otherwise use a compact, self-contained SVG (no <script>, no external refs, no <foreignObject>).
+- Values must be traceable to the references; if a tier is an inference, reflect that in its note. Do NOT fabricate precise numbers that aren't supported — round or qualify.
+- introHtml is a 1–2 sentence caption only. The reader sees the rendered visual, never the JSON.
+- If the requested visual is unsupported, return {"error":"unsupported","message":"<short explanation + supported alternatives>"} instead.`;
+
+/** Compact grounding block shared by clarify + visual modes. */
+function groundingBlock(body: WriteRequest): string {
+  const refs = body.articles
+    .map((a) => `[#${a.articleNumber}] ${a.title} — ${a.studyType || 'study'}; pop: ${a.patientPopulation || 'n/a'}; outcomes: ${a.primaryOutcomes || 'n/a'}`)
+    .join('\n') || '(no articles linked)';
+  return [
+    `SECTION: ${body.sectionNumber} ${body.sectionTitle}`,
+    '',
+    'CURRENT TEXT DRAFT (ground truth for this visual/table):',
+    (body.textDraft?.trim() || '(no text draft)').slice(0, 4000),
+    '',
+    `REFERENCES (${body.articles.length}, abstract-only):`,
+    refs,
+    body.additionalDirection?.trim() ? `\nINITIAL DIRECTION: ${body.additionalDirection.trim()}` : '',
+  ].join('\n');
+}
 
 function buildUserPrompt(body: WriteRequest): string {
   const siblings = (body.siblingContexts ?? [])
@@ -155,7 +219,12 @@ function buildUserPrompt(body: WriteRequest): string {
     'ADDITIONAL DIRECTION FROM USER:',
     body.additionalDirection?.trim() || 'None provided.',
     '',
-    'TASK: Draft the section content following the STRICT RULES and OUTPUT FORMAT above.',
+    body.reviseFrom?.trim()
+      ? `EXISTING DRAFT TO REVISE (improve this in place per the direction above; preserve correct [#N] citations, do not introduce new claims):\n${body.reviseFrom.trim()}\n`
+      : '',
+    body.reviseFrom?.trim()
+      ? 'TASK: Revise the existing draft above following the STRICT RULES, ADDITIONAL DIRECTION, and OUTPUT FORMAT.'
+      : 'TASK: Draft the section content following the STRICT RULES and OUTPUT FORMAT above.',
   ].filter((l) => l !== '').join('\n');
 
   if (body.contentType === 'table') {
@@ -168,6 +237,22 @@ function buildUserPrompt(body: WriteRequest): string {
 
 function sse(controller: ReadableStreamDefaultController, enc: TextEncoder, obj: unknown) {
   controller.enqueue(enc.encode(`data: ${JSON.stringify(obj)}\n\n`));
+}
+
+/** Extract a JSON object from model output that may be fenced or padded. */
+function extractJson(raw: string): unknown {
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  let text = (fenced ? fenced[1] : raw).trim();
+  if (!text.startsWith('{')) {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start !== -1 && end > start) text = text.slice(start, end + 1);
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
 
 function parseReasoning(raw: string): { wordCount?: number; agentReasoning?: unknown } {
@@ -197,6 +282,99 @@ export async function POST(req: NextRequest) {
     'Cache-Control': 'no-cache, no-transform',
     'Connection': 'keep-alive',
   };
+
+  // ── Mode: clarify — one conversational clarification turn (Audit+Fix 2) ──────
+  if (body.mode === 'clarify') {
+    const kind = body.contentType === 'visual' ? 'visual' : 'table';
+    if (!ANTHROPIC_API_KEY) {
+      const stream = new ReadableStream({
+        start(controller) {
+          sse(controller, enc, {
+            type: 'content',
+            text: 'Live clarification needs the AI API key, which is not configured here. Type any direction below and press Generate to proceed with a best-effort draft.',
+          });
+          sse(controller, enc, { type: 'done' });
+          controller.close();
+        },
+      });
+      return new Response(stream, { headers: sseHeaders });
+    }
+    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    const system = kind === 'visual' ? CLARIFY_VISUAL_SYSTEM : CLARIFY_TABLE_SYSTEM;
+    const convo: Anthropic.MessageParam[] = [
+      { role: 'user', content: `${groundingBlock(body)}\n\nAsk your single clarifying question now (or reply "READY: …" if you already have enough).` },
+      ...(body.messages ?? []).map((m) => ({ role: m.role, content: m.text })),
+    ];
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const sdkStream = client.messages.stream({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 300,
+            system,
+            messages: convo,
+          });
+          for await (const event of sdkStream) {
+            if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+              sse(controller, enc, { type: 'content', text: event.delta.text });
+            }
+          }
+          sse(controller, enc, { type: 'done' });
+          controller.close();
+        } catch (err) {
+          sse(controller, enc, { type: 'error', message: err instanceof Error ? err.message : 'Clarification failed' });
+          controller.close();
+        }
+      },
+    });
+    return new Response(stream, { headers: sseHeaders });
+  }
+
+  // ── Mode: visual — produce a visual JSON spec / sanitised SVG (Audit+Fix 2) ──
+  if (body.mode === 'visual') {
+    const jsonHeaders = { 'Content-Type': 'application/json' };
+    if (!ANTHROPIC_API_KEY) {
+      return new Response(
+        JSON.stringify({
+          error: 'no_key',
+          message: 'Live visual generation is unavailable because the AI API key is not configured. Pre-baked showcase visuals remain viewable.',
+        }),
+        { status: 200, headers: jsonHeaders },
+      );
+    }
+    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    const convo: Anthropic.MessageParam[] = [
+      { role: 'user', content: `${groundingBlock(body)}` },
+      ...(body.messages ?? []).map((m) => ({ role: m.role, content: m.text })),
+      { role: 'user', content: 'Now produce the agreed visual as a single JSON object per the output format.' },
+    ];
+    try {
+      const msg = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2048,
+        system: VISUAL_SYSTEM,
+        messages: convo,
+      });
+      const raw = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim();
+      const parsed = extractJson(raw);
+      if (!parsed || typeof parsed !== 'object') {
+        return new Response(JSON.stringify({ error: 'parse', message: 'The visual could not be generated. Try a different type or scope.' }), { status: 200, headers: jsonHeaders });
+      }
+      const obj = parsed as Record<string, unknown>;
+      if (obj.error === 'unsupported') {
+        return new Response(JSON.stringify({ error: 'unsupported', message: String(obj.message ?? 'That visual type is not supported in the current build.') }), { status: 200, headers: jsonHeaders });
+      }
+      const visual = obj.visual as VisualSpec | undefined;
+      if (!visual || (visual.kind !== 'funnel' && visual.kind !== 'svg')) {
+        return new Response(JSON.stringify({ error: 'parse', message: 'The visual could not be generated. Try a different type or scope.' }), { status: 200, headers: jsonHeaders });
+      }
+      const cleanVisual: VisualSpec =
+        visual.kind === 'svg' ? { ...visual, svg: sanitizeSvg(visual.svg) } : visual;
+      return new Response(JSON.stringify({ introHtml: String(obj.introHtml ?? ''), visual: cleanVisual }), { status: 200, headers: jsonHeaders });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: 'failed', message: err instanceof Error ? err.message : 'Visual generation failed' }), { status: 200, headers: jsonHeaders });
+    }
+  }
 
   // Graceful fallback — no key configured. Stream a clear, non-fabricated note.
   if (!ANTHROPIC_API_KEY) {

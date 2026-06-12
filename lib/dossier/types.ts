@@ -102,6 +102,25 @@ export interface EvidenceInputs {
   vsIds: string[];
 }
 
+/**
+ * Visual representation stored underneath a `contentType: 'visual'` version
+ * (Audit+Fix 2). The funnel kind holds a JSON spec rendered to SVG by the
+ * dossier-owned renderer; the svg kind holds sanitised raw SVG markup. Either
+ * way the SVG — never the JSON — is what the user sees, in draft and compiled.
+ */
+export interface FunnelLevelSpec {
+  /** Tier label, e.g. "Diagnosed prevalence". */
+  label: string;
+  /** Quantity at this tier (population, %, etc.) — drives the trapezoid width. */
+  value: number;
+  /** Optional caption shown under the label, e.g. "≈ 3.5M (UK)". */
+  note?: string;
+}
+
+export type VisualSpec =
+  | { kind: 'funnel'; title?: string; levels: FunnelLevelSpec[] }
+  | { kind: 'svg'; svg: string; title?: string };
+
 export interface SectionContent {
   id: string;
   sectionId: string;
@@ -114,6 +133,8 @@ export interface SectionContent {
   agentReasoning?: AgentReasoning;
   /** SN/VS inputs that grounded this version (Phase 5.6). */
   evidenceInputs?: EvidenceInputs;
+  /** Visual payload for `contentType: 'visual'` versions (Audit+Fix 2). */
+  visual?: VisualSpec;
   createdAt: string;
 }
 

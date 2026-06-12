@@ -13,7 +13,9 @@ import type {
   SectionStatus,
   AgentReasoning,
   GuidanceCoverage,
+  VisualSpec,
 } from '@/lib/dossier/types';
+import VisualBlock from './VisualBlock';
 import {
   saveContentVersion,
   getContentVersions,
@@ -452,6 +454,20 @@ export function SectionEditor({
   const [additionalDirection, setAdditionalDirection] = useState('');
   const [reasoningData, setReasoningData] = useState<AgentReasoning | null>(null);
 
+  // ── Table/Visual clarification exchange (Audit+Fix 2) ─────────────────────────
+  // When the writer clicks Table or Visual, a short LLM-guided exchange runs in
+  // the panel using the Additional-direction field as the reply box. `ready`
+  // flips once the assistant has enough detail (or the 2-turn cap is hit); the
+  // writer then confirms to generate.
+  const [clarify, setClarify] = useState<{
+    kind: 'table' | 'visual';
+    messages: { role: 'assistant' | 'user'; text: string }[];
+    streaming: boolean;
+    ready: boolean;
+  } | null>(null);
+  // Visual payload of the version currently shown — drives the SVG preview.
+  const [currentVisual, setCurrentVisual] = useState<VisualSpec | null>(null);
+
   // ── SN/VS evidence inputs (Phase 5.6) ─────────────────────────────────────────
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [groundSn, setGroundSn] = useState<Set<string>>(new Set());
@@ -521,6 +537,8 @@ export function SectionEditor({
     } else if (editor) {
       editor.commands.clearContent();
     }
+    setCurrentVisual(current?.visual ?? null);
+    setClarify(null);
     setReasoningData(current?.agentReasoning ?? null);
     setGenerationError('');
 
@@ -556,6 +574,7 @@ export function SectionEditor({
     const isCurrent = v.isCurrent;
     setViewingVersionId(isCurrent ? null : v.id);
     editor?.commands.setContent(v.content);
+    setCurrentVisual(v.visual ?? null);
     setReasoningData(v.agentReasoning ?? null);
     setEvidenceInputs(v.evidenceInputs ?? null);
   }
@@ -573,6 +592,7 @@ export function SectionEditor({
     setViewingVersionId(null);
     const current = versions.find((v) => v.isCurrent);
     if (current && editor) editor.commands.setContent(current.content);
+    setCurrentVisual(current?.visual ?? null);
     setReasoningData(current?.agentReasoning ?? null);
     setEvidenceInputs(current?.evidenceInputs ?? null);
   }
@@ -588,11 +608,15 @@ export function SectionEditor({
     setViewingVersionId(null);
     const current = versions.find((v) => v.isCurrent);
     if (current && editor) editor.commands.setContent(current.content);
+    setCurrentVisual(current?.visual ?? null);
     setEvidenceInputs(current?.evidenceInputs ?? null);
   }
 
   // ── Generate content (SSE streaming) ──────────────────────────────────────────
-  const generate = useCallback(async (contentType: 'text' | 'table' | 'visual') => {
+  const generate = useCallback(async (
+    contentType: 'text' | 'table' | 'visual',
+    opts?: { reviseFrom?: string; directive?: string },
+  ) => {
     if (!section || isGenerating) return;
     if (section.articleLinks.length === 0 && groundSn.size === 0 && groundVs.size === 0) return;
 
@@ -635,7 +659,9 @@ export function SectionEditor({
       sectionTitle: section.title,
       guidanceNotes: guidance,
       contentType,
-      additionalDirection: additionalDirection.trim() || undefined,
+      additionalDirection:
+        [additionalDirection.trim(), opts?.directive?.trim()].filter(Boolean).join('\n') || undefined,
+      reviseFrom: opts?.reviseFrom,
       dossierTitle,
       snStatements,
       vsMessages,
@@ -769,6 +795,171 @@ export function SectionEditor({
     }
   }
 
+  // ── Revise — refine the current draft (Audit+Fix 2) ───────────────────────────
+  // Feeds the current draft HTML back to the writing agent with the Additional
+  // direction, producing a refined new version. Distinct from Generate:Text
+  // (which drafts fresh from evidence).
+  function handleRevise() {
+    if (!section || !editor || isGenerating || isViewingOld) return;
+    const html = editor.getHTML();
+    if (!editor.getText().trim()) return;
+    void generate('text', { reviseFrom: html });
+  }
+
+  // ── Table / Visual clarification + visual generation (Audit+Fix 2) ────────────
+  const MAX_CLARIFY_USER_TURNS = 2;
+
+  /** Shared evidence/grounding fields for clarify + visual requests. */
+  function evidencePayload() {
+    const snStatements = [...groundSn]
+      .map((id) => STATEMENT_BY_ID[id])
+      .filter(Boolean)
+      .map((s) => ({ id: s.id, pillar: PILLAR_BY_KEY[s.pillar]?.name ?? s.pillar, text: s.text }));
+    const vsMessages = [...groundVs]
+      .map((id) => VALUE_MESSAGES.find((m) => m.id === id))
+      .filter(Boolean)
+      .map((m) => ({ id: m!.id, domain: DOMAIN_BY_KEY[m!.domain]?.name ?? m!.domain, headline: m!.headline, text: m!.text, strength: m!.strength }));
+    return {
+      sectionId: section!.id,
+      sectionNumber: section!.number,
+      sectionTitle: section!.title,
+      guidanceNotes: guidance,
+      dossierTitle,
+      additionalDirection: additionalDirection.trim() || undefined,
+      textDraft: editor?.getText() ?? '',
+      snStatements,
+      vsMessages,
+      articles: section!.articleLinks.map((l) => ({
+        articleNumber: l.articleNumber, title: l.title, authors: l.authors, journal: l.journal,
+        pubDate: l.pubDate, studyType: l.studyType, patientPopulation: l.patientPopulation,
+        interventions: l.interventions, primaryOutcomes: l.primaryOutcomes, category: l.category, abstract: l.abstract,
+      })),
+    };
+  }
+
+  /** Run one clarification turn against the SSE route; append the assistant reply. */
+  async function runClarify(kind: 'table' | 'visual', transcript: { role: 'assistant' | 'user'; text: string }[]) {
+    try {
+      const res = await fetch('/api/dossier/write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...evidencePayload(), mode: 'clarify', contentType: kind, messages: transcript }),
+      });
+      if (!res.ok || !res.body) throw new Error('unavailable');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let sseBuffer = '';
+      let assistant = '';
+      let done = false;
+      while (!done) {
+        const { value, done: streamDone } = await reader.read();
+        done = streamDone;
+        if (value) sseBuffer += decoder.decode(value, { stream: true });
+        const events = sseBuffer.split('\n\n');
+        sseBuffer = events.pop() ?? '';
+        for (const evt of events) {
+          const line = evt.trim();
+          if (!line.startsWith('data:')) continue;
+          const json = line.slice(line.indexOf('data:') + 5).trim();
+          if (!json) continue;
+          try {
+            const msg = JSON.parse(json) as { type: string; text?: string };
+            if (msg.type === 'content' && msg.text) assistant += msg.text;
+            else if (msg.type === 'done') done = true;
+          } catch { /* ignore */ }
+        }
+      }
+      const reply = assistant.trim() || 'Could you clarify what you have in mind?';
+      const newTranscript = [...transcript, { role: 'assistant' as const, text: reply }];
+      const userTurns = newTranscript.filter((m) => m.role === 'user').length;
+      const ready = /^READY:/i.test(reply) || userTurns >= MAX_CLARIFY_USER_TURNS;
+      setClarify({ kind, messages: newTranscript, streaming: false, ready });
+    } catch {
+      // Offline / no key — let the writer proceed straight to generation.
+      setClarify({ kind, messages: [...transcript, { role: 'assistant', text: 'Live clarification is unavailable here — add any direction below and press Generate.' }], streaming: false, ready: true });
+    }
+  }
+
+  function startClarify(kind: 'table' | 'visual') {
+    if (!section || isGenerating || noInputs || !hasTextDraft || isViewingOld) return;
+    setGenerationError('');
+    setClarify({ kind, messages: [], streaming: true, ready: false });
+    void runClarify(kind, []);
+  }
+
+  function sendClarifyReply() {
+    if (!clarify || clarify.streaming) return;
+    const reply = additionalDirection.trim();
+    if (!reply) return;
+    const next = [...clarify.messages, { role: 'user' as const, text: reply }];
+    setAdditionalDirection('');
+    setClarify({ ...clarify, messages: next, streaming: true });
+    void runClarify(clarify.kind, next);
+  }
+
+  function cancelClarify() {
+    setClarify(null);
+  }
+
+  /** Finalise the exchange → generate the table or visual on the agreed spec. */
+  function confirmClarify() {
+    if (!clarify) return;
+    const kind = clarify.kind;
+    const pending = additionalDirection.trim();
+    const messages = pending ? [...clarify.messages, { role: 'user' as const, text: pending }] : clarify.messages;
+    const directive = messages.map((m) => `${m.role === 'assistant' ? 'Assistant' : 'Writer'}: ${m.text}`).join('\n');
+    setClarify(null);
+    setAdditionalDirection('');
+    if (kind === 'table') {
+      void generate('table', { directive });
+    } else {
+      void generateVisual(messages);
+    }
+  }
+
+  /** Generate a visual: POST mode 'visual' → JSON spec/SVG → save a visual version. */
+  async function generateVisual(messages: { role: 'assistant' | 'user'; text: string }[]) {
+    if (!section || isGenerating) return;
+    setIsGenerating(true);
+    setGenerationError('');
+    setGenerationProgress('Designing the visual…');
+    try {
+      const res = await fetch('/api/dossier/write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...evidencePayload(), mode: 'visual', contentType: 'visual', messages }),
+      });
+      const data = (await res.json()) as { introHtml?: string; visual?: VisualSpec; error?: string; message?: string };
+      if (data.error || !data.visual) {
+        setGenerationError(data.message || 'The visual could not be generated. Try a different type or scope.');
+        return;
+      }
+      const introHtml = data.introHtml || '';
+      const words = introHtml.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
+      const saved = saveContentVersion(dossierId, section.id, {
+        content: introHtml,
+        contentType: 'visual',
+        wordCount: words,
+        source: 'ai',
+        visual: data.visual,
+        evidenceInputs: { snIds: [...groundSn], vsIds: [...groundVs] },
+      });
+      if (saved) {
+        const versions = getContentVersions(dossierId, section.id) as SectionContent[];
+        setContentVersions(versions);
+        setViewingVersionId(null);
+        editor?.commands.setContent(introHtml);
+        setCurrentVisual(data.visual);
+        onSectionUpdate(section);
+      }
+    } catch {
+      setGenerationError('Visual generation failed: the service is unavailable.');
+    } finally {
+      setIsGenerating(false);
+      setGenerationProgress('');
+    }
+  }
+
   // ── SN/VS grounding toggles ───────────────────────────────────────────────────
   function toggleGroundSn(id: string) {
     setGroundSn((prev) => {
@@ -834,6 +1025,11 @@ export function SectionEditor({
   const noInputs = section
     ? section.articleLinks.length === 0 && groundSn.size === 0 && groundVs.size === 0
     : true;
+  // Table/Visual are gated until a text draft exists for the section — either a
+  // saved text/hybrid version, or non-empty prose currently in the editor.
+  const hasTextDraft =
+    contentVersions.some((v) => v.contentType === 'text') ||
+    (!!editor && !!currentVersion && editor.getText().trim().length > 0);
   // Offer "Adapt from Global" only when this section is empty (no content
   // versions yet), Global has same-number content, and a handler is wired.
   const canAdaptFromGlobal =
@@ -1176,7 +1372,116 @@ export function SectionEditor({
                 .prose-editor th { background: var(--serif-muted); font-weight: 600; }
               `}</style>
               <EditorContent editor={editor} />
+              {/* Visual preview — rendered SVG for a `visual` version. The user
+                  sees the SVG here in draft (and in the compiled view), never
+                  the underlying JSON spec / raw markup. */}
+              {currentVisual && (
+                <div className="px-4 pb-4">
+                  <VisualBlock spec={currentVisual} />
+                </div>
+              )}
             </div>
+
+            {/* Generate row — Text | Table | Visual, ABOVE the direction field
+                (Audit+Fix 2). Table/Visual are gated on a text draft existing
+                and open a guided clarification exchange before generating. */}
+            <div
+              className="flex items-center gap-2 px-4 py-3 flex-shrink-0 border-t flex-wrap"
+              style={{ borderColor: 'var(--serif-border)', backgroundColor: 'var(--serif-card)' }}
+            >
+              <span
+                className="font-mono text-xs font-medium tracking-[0.08em] flex-shrink-0"
+                style={{ color: 'var(--serif-muted-foreground)' }}
+              >
+                Generate:
+              </span>
+              <button
+                type="button"
+                onClick={() => generate('text')}
+                disabled={isGenerating || noInputs || isViewingOld || !!clarify}
+                title={noInputs ? 'Link references or ground SN/VS first' : 'Generate prose text'}
+                className="px-3.5 py-2 rounded-[6px] text-xs font-medium font-mono text-white transition-all duration-150 disabled:opacity-40"
+                style={{ backgroundColor: 'var(--serif-accent)' }}
+              >
+                Text
+              </button>
+              <button
+                type="button"
+                onClick={() => startClarify('table')}
+                disabled={isGenerating || noInputs || !hasTextDraft || isViewingOld || !!clarify}
+                title={!hasTextDraft ? 'Generate a text draft first' : noInputs ? 'Link references or ground SN/VS first' : 'Clarify, then generate an evidence table'}
+                className="px-3.5 py-2 rounded-[6px] text-xs font-medium font-mono transition-all duration-150 border disabled:opacity-40"
+                style={{ borderColor: 'var(--serif-border)', color: 'var(--serif-foreground)' }}
+              >
+                Table
+              </button>
+              <button
+                type="button"
+                onClick={() => startClarify('visual')}
+                disabled={isGenerating || noInputs || !hasTextDraft || isViewingOld || !!clarify}
+                title={!hasTextDraft ? 'Generate a text draft first' : noInputs ? 'Link references or ground SN/VS first' : 'Clarify, then generate a visual'}
+                className="px-3.5 py-2 rounded-[6px] text-xs font-medium font-mono transition-all duration-150 border disabled:opacity-40"
+                style={{ borderColor: 'var(--serif-border)', color: 'var(--serif-foreground)' }}
+              >
+                Visual
+              </button>
+
+              {/* Adapt from Global — only when this section is empty and Global
+                  has same-number content to copy forward. */}
+              {canAdaptFromGlobal && !clarify && (
+                <button
+                  type="button"
+                  onClick={handleAdaptFromGlobal}
+                  title="Copy the Global dossier's content for this section forward as a starting draft"
+                  className="px-3.5 py-2 rounded-[6px] text-xs font-medium font-mono transition-all duration-150 border disabled:opacity-40 flex items-center gap-1.5"
+                  style={{ borderColor: 'var(--serif-accent)', color: 'var(--serif-accent)', backgroundColor: 'rgba(8,56,96,0.05)' }}
+                >
+                  Adapt from Global
+                  <span aria-hidden="true">↓</span>
+                </button>
+              )}
+              {!hasTextDraft && !clarify && (
+                <span className="font-mono text-[10px]" style={{ color: 'var(--serif-muted-foreground)', opacity: 0.7 }}>
+                  Table / Visual unlock after a text draft
+                </span>
+              )}
+            </div>
+
+            {/* Clarification exchange (Audit+Fix 2) — short guided turns shown
+                above the direction field; the writer replies in that field. */}
+            {clarify && (
+              <div
+                className="flex-shrink-0 px-4 pt-3 border-t"
+                style={{ borderColor: 'var(--serif-border)', backgroundColor: 'var(--serif-muted)' }}
+              >
+                <div className="font-mono text-[9px] font-medium tracking-[0.12em] uppercase mb-1.5" style={{ color: 'var(--serif-accent)' }}>
+                  {clarify.kind === 'table' ? 'Table' : 'Visual'} — guided setup
+                </div>
+                <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                  {clarify.messages.map((m, i) => (
+                    <div
+                      key={i}
+                      className="text-xs leading-relaxed rounded-[6px] px-2.5 py-1.5"
+                      style={
+                        m.role === 'assistant'
+                          ? { backgroundColor: 'var(--serif-card)', color: 'var(--serif-foreground)', border: '1px solid var(--serif-border)' }
+                          : { backgroundColor: 'rgba(8,56,96,0.08)', color: 'var(--serif-foreground)' }
+                      }
+                    >
+                      <span className="font-mono text-[9px] uppercase tracking-[0.08em] mr-1.5" style={{ color: 'var(--serif-muted-foreground)' }}>
+                        {m.role === 'assistant' ? 'AI' : 'You'}
+                      </span>
+                      {m.text.replace(/^READY:\s*/i, '')}
+                    </div>
+                  ))}
+                  {clarify.streaming && (
+                    <div className="flex items-center gap-2 text-xs px-2.5 py-1.5" style={{ color: 'var(--serif-muted-foreground)' }}>
+                      <Spinner /> thinking…
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Direction input */}
             <div
@@ -1184,14 +1489,27 @@ export function SectionEditor({
               style={{ borderColor: 'var(--serif-border)', backgroundColor: 'var(--serif-card)' }}
             >
               <label className="font-mono text-[9px] font-medium tracking-[0.12em] uppercase block mb-1.5" style={{ color: 'var(--serif-muted-foreground)' }}>
-                Additional direction
+                {clarify ? (clarify.ready ? 'Add any final direction (optional)' : 'Your reply') : 'Additional direction'}
               </label>
               <textarea
                 value={additionalDirection}
                 onChange={(e) => setAdditionalDirection(e.target.value)}
                 rows={2}
-                placeholder="Add further instructions to refine the generated content… e.g. 'Focus on Phase III data only' or 'Add a table comparing study populations'"
-                className="w-full px-3 py-2 rounded-[6px] border text-xs bg-transparent focus:outline-none resize-none leading-relaxed"
+                disabled={!!clarify && clarify.streaming}
+                placeholder={
+                  clarify
+                    ? (clarify.ready
+                        ? 'Optional tweaks before generating…'
+                        : 'Type your answer, then press Send…')
+                    : "Add further instructions to refine the generated content… e.g. 'Focus on Phase III data only' or 'Add a table comparing study populations'"
+                }
+                onKeyDown={(e) => {
+                  if (clarify && !clarify.ready && !clarify.streaming && e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendClarifyReply();
+                  }
+                }}
+                className="w-full px-3 py-2 rounded-[6px] border text-xs bg-transparent focus:outline-none resize-none leading-relaxed disabled:opacity-50"
                 style={{
                   borderColor: 'var(--serif-border)',
                   color: 'var(--serif-foreground)',
@@ -1202,7 +1520,9 @@ export function SectionEditor({
               />
             </div>
 
-            {/* Generate + Save row */}
+            {/* Action row — Revise / Save (BELOW the direction field, Audit+Fix
+                2). While a clarification exchange is active it shows Send /
+                Generate / Cancel; while generating it shows the progress. */}
             <div
               className="flex items-center gap-2 px-4 py-3 flex-shrink-0 border-t"
               style={{ borderColor: 'var(--serif-border)', backgroundColor: 'var(--serif-card)' }}
@@ -1214,70 +1534,67 @@ export function SectionEditor({
                     {generationProgress}
                   </span>
                 </div>
-              ) : (
+              ) : clarify ? (
                 <div className="flex items-center gap-2 flex-1">
-                  {/* Non-interactive "Generate:" label */}
-                  <span
-                    className="font-mono text-xs font-medium tracking-[0.08em] flex-shrink-0"
-                    style={{ color: 'var(--serif-muted-foreground)' }}
-                  >
-                    Generate:
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => generate('text')}
-                    disabled={isGenerating || noInputs}
-                    title={noInputs ? 'Link references or ground SN/VS first' : 'Generate prose text'}
-                    className="px-3.5 py-2 rounded-[6px] text-xs font-medium font-mono text-white transition-all duration-150 disabled:opacity-40"
-                    style={{ backgroundColor: 'var(--serif-accent)' }}
-                  >
-                    Text
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => generate('table')}
-                    disabled={isGenerating || noInputs}
-                    title={noInputs ? 'Link references or ground SN/VS first' : 'Generate evidence table'}
-                    className="px-3.5 py-2 rounded-[6px] text-xs font-medium font-mono transition-all duration-150 border disabled:opacity-40"
-                    style={{
-                      borderColor: 'var(--serif-border)',
-                      color: 'var(--serif-foreground)',
-                    }}
-                  >
-                    Table
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => generate('visual')}
-                    disabled={isGenerating || noInputs}
-                    title={noInputs ? 'Link references or ground SN/VS first' : 'Generate visual summary'}
-                    className="px-3.5 py-2 rounded-[6px] text-xs font-medium font-mono transition-all duration-150 border disabled:opacity-40"
-                    style={{
-                      borderColor: 'var(--serif-border)',
-                      color: 'var(--serif-foreground)',
-                    }}
-                  >
-                    Visual
-                  </button>
-
-                  {/* Adapt from Global — only when this section is empty and
-                      Global has same-number content to copy forward. */}
-                  {canAdaptFromGlobal && (
+                  {clarify.ready ? (
                     <button
                       type="button"
-                      onClick={handleAdaptFromGlobal}
-                      title="Copy the Global dossier's content for this section forward as a starting draft"
-                      className="px-3.5 py-2 rounded-[6px] text-xs font-medium font-mono transition-all duration-150 border disabled:opacity-40 flex items-center gap-1.5"
-                      style={{
-                        borderColor: 'var(--serif-accent)',
-                        color: 'var(--serif-accent)',
-                        backgroundColor: 'rgba(8,56,96,0.05)',
-                      }}
+                      onClick={confirmClarify}
+                      disabled={clarify.streaming}
+                      className="px-4 py-2 rounded-[6px] text-xs font-medium font-mono text-white transition-all duration-150 disabled:opacity-40"
+                      style={{ backgroundColor: 'var(--serif-accent)' }}
                     >
-                      Adapt from Global
-                      <span aria-hidden="true">↓</span>
+                      Generate {clarify.kind === 'table' ? 'table' : 'visual'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={sendClarifyReply}
+                      disabled={clarify.streaming || !additionalDirection.trim()}
+                      className="px-4 py-2 rounded-[6px] text-xs font-medium font-mono text-white transition-all duration-150 disabled:opacity-40"
+                      style={{ backgroundColor: 'var(--serif-accent)' }}
+                    >
+                      Send
                     </button>
                   )}
+                  {!clarify.ready && (
+                    <button
+                      type="button"
+                      onClick={confirmClarify}
+                      disabled={clarify.streaming}
+                      title="Skip further questions and generate now"
+                      className="px-3 py-2 rounded-[6px] text-xs font-medium font-mono border transition-all duration-150 disabled:opacity-40"
+                      style={{ borderColor: 'var(--serif-border)', color: 'var(--serif-foreground)' }}
+                    >
+                      Generate now
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={cancelClarify}
+                    disabled={clarify.streaming}
+                    className="ml-auto px-3 py-2 rounded-[6px] text-xs font-medium font-mono transition-all duration-150 disabled:opacity-40"
+                    style={{ color: 'var(--serif-muted-foreground)' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 flex-1">
+                  <button
+                    type="button"
+                    onClick={handleRevise}
+                    disabled={isViewingOld || !editor || !currentVersion}
+                    title={!currentVersion ? 'Generate a draft first' : 'Refine the current draft using the direction above'}
+                    className="px-4 py-2 rounded-[6px] text-xs font-medium font-mono text-white transition-all duration-150 disabled:opacity-40 flex items-center gap-1.5"
+                    style={{ backgroundColor: 'var(--serif-accent)' }}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v6h6M20 20v-6h-6" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 10a8 8 0 00-14.9-3.4M4 14a8 8 0 0014.9 3.4" />
+                    </svg>
+                    Revise
+                  </button>
 
                   {/* Save button — right side */}
                   <button
@@ -1302,6 +1619,10 @@ export function SectionEditor({
                 </div>
               )}
             </div>
+
+            {/* ── Status slot (reserved for Audit+Fix 3) ──────────────────────
+                The sign-off control below is the reserved slot beneath
+                Revise/Save; Audit+Fix 3 relabels it to "Status". */}
 
             {/* Sign-off control — 2 cumulative toggles (AI draft → Human
                 verified → GVD lead approved). RBAC is illustrative, not built. */}

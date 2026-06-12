@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { DossierSummary, DossierSection, SectionArticleLink } from '@/lib/dossier/types';
 import { flattenSectionTree } from '@/lib/dossier/store';
 import { signOffState, SIGNOFF_META, SIGNOFF_ORDER } from '@/lib/dossier/signoff';
+import VisualBlock from './VisualBlock';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -307,6 +308,12 @@ export function CompiledView({ dossier, sections, onClose }: CompiledViewProps) 
                       .prose-compiled .citation-link { color: var(--serif-accent); text-decoration: none; font-weight: 500; }
                       .prose-compiled .citation-link:hover { text-decoration: underline; }
                     `}</style>
+                    {/* Visual versions render their SVG here (Audit+Fix 2) — the
+                        prose above is the caption; the JSON/raw markup is never
+                        shown. */}
+                    {section.currentContent.contentType === 'visual' && section.currentContent.visual && (
+                      <VisualBlock spec={section.currentContent.visual} />
+                    )}
                     <SectionReasoningToggle section={section} />
                   </>
                 ) : (
