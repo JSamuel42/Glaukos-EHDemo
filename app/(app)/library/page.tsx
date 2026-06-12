@@ -170,7 +170,6 @@ function LibraryPageInner() {
       }
       lookup[d.id] = byArticle;
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDossierSectionLookup(lookup);
   }, [allArticles]);
 
