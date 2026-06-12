@@ -24,6 +24,11 @@ interface ArticleRef {
 
 interface SiblingContext { number: string; title: string; status: string }
 
+/** Scientific Narrative statement supplied as an internal synthesis input. */
+interface SnInput { id: string; pillar: string; text: string }
+/** Payer Value Story message supplied as an internal synthesis input. */
+interface VsInput { id: string; domain: string; headline: string; text: string; strength: string }
+
 interface WriteRequest {
   sectionId: string;
   sectionNumber: string;
@@ -36,6 +41,9 @@ interface WriteRequest {
   siblingContexts?: SiblingContext[];
   /** Optional writing context from the Context Manager. */
   writingContext?: { gvdDescription?: string; writingStyle?: string; valueStory?: string };
+  /** Phase 5.6: internal synthesis inputs (read-only drafting aids). */
+  snStatements?: SnInput[];
+  vsMessages?: VsInput[];
 }
 
 // ── System prompt — verbatim STRICT RULES / STYLE; output format adapted for
@@ -115,6 +123,19 @@ function buildUserPrompt(body: WriteRequest): string {
       ].filter(Boolean).join('\n')
     : '';
 
+  // Internal synthesis inputs (Scientific Narrative + Payer Value Story).
+  const sn = body.snStatements ?? [];
+  const vs = body.vsMessages ?? [];
+  const snVsBlock = (sn.length > 0 || vs.length > 0)
+    ? [
+        '',
+        'INTERNAL SYNTHESIS INPUTS — Scientific Narrative & Payer Value Story:',
+        'These are the team\'s own approved narrative artifacts, provided as drafting aids to shape framing and emphasis. They are NOT external evidence: do not cite them with [#N], and do not state strength ratings in the prose. Substantive clinical/economic claims must still trace to the numbered REFERENCES above (abstract-only).',
+        ...(sn.length > 0 ? ['Scientific Narrative statements:', ...sn.map((s) => `- ${s.id} (${s.pillar}): ${s.text}`)] : []),
+        ...(vs.length > 0 ? ['Payer Value Story messages:', ...vs.map((m) => `- ${m.id} (${m.domain}, strength: ${m.strength}) — ${m.headline}: ${m.text}`)] : []),
+      ].join('\n')
+    : '';
+
   let prompt = [
     `DOSSIER: ${body.dossierTitle}`,
     ctxBlock,
@@ -129,6 +150,7 @@ function buildUserPrompt(body: WriteRequest): string {
     '',
     `REFERENCES (${body.articles.length} articles):`,
     refs || '(no articles linked)',
+    snVsBlock,
     '',
     'ADDITIONAL DIRECTION FROM USER:',
     body.additionalDirection?.trim() || 'None provided.',

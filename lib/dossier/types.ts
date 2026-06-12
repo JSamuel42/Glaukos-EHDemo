@@ -92,6 +92,14 @@ export interface AgentReasoning {
   synthesis_approach: string;
 }
 
+/** SN statements + VS messages used as drafting inputs for a content version. */
+export interface EvidenceInputs {
+  /** Scientific Narrative statement ids (e.g. 'S7'). */
+  snIds: string[];
+  /** Payer Value Story message ids (e.g. 'V2'). */
+  vsIds: string[];
+}
+
 export interface SectionContent {
   id: string;
   sectionId: string;
@@ -102,6 +110,8 @@ export interface SectionContent {
   wordCount: number;
   source: ContentSource;
   agentReasoning?: AgentReasoning;
+  /** SN/VS inputs that grounded this version (Phase 5.6). */
+  evidenceInputs?: EvidenceInputs;
   createdAt: string;
 }
 

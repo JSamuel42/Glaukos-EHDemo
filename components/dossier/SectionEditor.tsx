@@ -18,8 +18,32 @@ import {
   getContentVersions,
   restoreContentVersion,
   updateCurrentContent,
+  linkArticle,
+  getArticleNumber,
 } from '@/lib/dossier/store';
 import { contextKey } from '@/lib/dossier/seed';
+import {
+  PILLARS,
+  PILLAR_BY_KEY,
+  STATEMENT_BY_ID,
+  getStatementsForPillar,
+  type ScientificStatement,
+} from '@/lib/scientific-narrative/data';
+import {
+  DOMAINS,
+  DOMAIN_BY_KEY,
+  VALUE_MESSAGES,
+  getMessagesForDomain,
+  type ValueMessage,
+} from '@/lib/value-story/data';
+import {
+  suggestedPillarKeys,
+  suggestedDomainKeys,
+  snInsertHtml,
+  vsInsertHtml,
+  strengthLabel,
+  type ResolvedRef,
+} from '@/lib/dossier/snvs';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -104,6 +128,19 @@ function CoverageBadge({ coverage }: { coverage: GuidanceCoverage['coverage'] })
       style={{ backgroundColor: styles.bg, color: styles.color }}
     >
       {styles.label}
+    </span>
+  );
+}
+
+// ── Strength badge (VS drafting aid — never in prose) ───────────────────────────
+
+function StrengthBadge({ label }: { label: string }) {
+  return (
+    <span
+      className="font-mono text-[9px] font-medium tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-[3px] whitespace-nowrap flex-shrink-0"
+      style={{ backgroundColor: 'rgba(8,56,96,0.08)', color: 'var(--serif-accent)' }}
+    >
+      {label}
     </span>
   );
 }
@@ -237,6 +274,75 @@ function ReasoningPanel({ reasoning }: ReasoningPanelProps) {
   );
 }
 
+// ── Evidence inputs panel (grounded SN/VS — coverage extension) ─────────────────
+
+function EvidenceInputsPanel({ evidenceInputs }: { evidenceInputs: { snIds: string[]; vsIds: string[] } }) {
+  const snIds = evidenceInputs.snIds ?? [];
+  const vsIds = evidenceInputs.vsIds ?? [];
+  if (snIds.length === 0 && vsIds.length === 0) return null;
+
+  return (
+    <div
+      className="flex-shrink-0"
+      style={{ borderTop: '1px solid var(--serif-border)', backgroundColor: 'rgba(8,56,96,0.03)' }}
+    >
+      <div className="px-4 py-3 flex flex-col gap-3">
+        <p className="font-mono text-[10px] font-medium tracking-[0.08em] uppercase" style={{ color: 'var(--serif-muted-foreground)' }}>
+          Evidence inputs (SN/VS)
+        </p>
+
+        {snIds.length > 0 && (
+          <div>
+            <p className="font-mono text-[9px] font-medium tracking-[0.12em] uppercase mb-1.5" style={{ color: 'var(--serif-muted-foreground)' }}>
+              Scientific Narrative
+            </p>
+            <div className="flex flex-col gap-1">
+              {snIds.map((id) => {
+                const s = STATEMENT_BY_ID[id];
+                const pillarName = s ? (PILLAR_BY_KEY[s.pillar]?.name ?? s.pillar) : undefined;
+                return (
+                  <div key={id} className="flex items-start gap-2">
+                    <span className="font-mono text-[10px] font-medium flex-shrink-0 w-8" style={{ color: 'var(--serif-accent)' }}>
+                      {id}
+                    </span>
+                    <span className="font-mono text-[10px] leading-snug" style={{ color: 'var(--serif-foreground)' }}>
+                      {pillarName ?? '—'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {vsIds.length > 0 && (
+          <div>
+            <p className="font-mono text-[9px] font-medium tracking-[0.12em] uppercase mb-1.5" style={{ color: 'var(--serif-muted-foreground)' }}>
+              Payer Value Story
+            </p>
+            <div className="flex flex-col gap-1">
+              {vsIds.map((id) => {
+                const m = VALUE_MESSAGES.find((vm) => vm.id === id);
+                return (
+                  <div key={id} className="flex items-start gap-2">
+                    <span className="font-mono text-[10px] font-medium flex-shrink-0 w-8" style={{ color: 'var(--serif-accent)' }}>
+                      {id}
+                    </span>
+                    <span className="flex-1 font-mono text-[10px] leading-snug" style={{ color: 'var(--serif-foreground)' }}>
+                      {m?.headline ?? '—'}
+                    </span>
+                    {m && <StrengthBadge label={strengthLabel(m)} />}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 function EmptyState() {
@@ -302,6 +408,15 @@ export function SectionEditor({
   const [additionalDirection, setAdditionalDirection] = useState('');
   const [reasoningData, setReasoningData] = useState<AgentReasoning | null>(null);
 
+  // ── SN/VS evidence inputs (Phase 5.6) ─────────────────────────────────────────
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [groundSn, setGroundSn] = useState<Set<string>>(new Set());
+  const [groundVs, setGroundVs] = useState<Set<string>>(new Set());
+  const [evidenceInputs, setEvidenceInputs] = useState<{ snIds: string[]; vsIds: string[] } | null>(null);
+  // Pillars/domains expanded in the drawer (collapsible groups).
+  const [openPillars, setOpenPillars] = useState<Set<string>>(new Set());
+  const [openDomains, setOpenDomains] = useState<Set<string>>(new Set());
+
   // ── Editor save debounce ref ────────────────────────────────────────────────
   const editorSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -345,6 +460,9 @@ export function SectionEditor({
       setContentVersions([]);
       setViewingVersionId(null);
       setReasoningData(null);
+      setGroundSn(new Set());
+      setGroundVs(new Set());
+      setEvidenceInputs(null);
       return;
     }
     setGuidance(section.guidanceNotes ?? '');
@@ -361,6 +479,16 @@ export function SectionEditor({
     }
     setReasoningData(current?.agentReasoning ?? null);
     setGenerationError('');
+
+    // Reset grounding selection on section change; hydrate evidence inputs
+    // from the current version (so the coverage block reflects last generation).
+    setGroundSn(new Set());
+    setGroundVs(new Set());
+    setEvidenceInputs(current?.evidenceInputs ?? null);
+
+    // Pre-expand suggested SN pillars / VS domains for this section.
+    setOpenPillars(new Set<string>(suggestedPillarKeys(section)));
+    setOpenDomains(new Set<string>(suggestedDomainKeys(section)));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section?.id]);
 
@@ -385,6 +513,7 @@ export function SectionEditor({
     setViewingVersionId(isCurrent ? null : v.id);
     editor?.commands.setContent(v.content);
     setReasoningData(v.agentReasoning ?? null);
+    setEvidenceInputs(v.evidenceInputs ?? null);
   }
 
   // ── Adapt from Global ─────────────────────────────────────────────────────────
@@ -401,6 +530,7 @@ export function SectionEditor({
     const current = versions.find((v) => v.isCurrent);
     if (current && editor) editor.commands.setContent(current.content);
     setReasoningData(current?.agentReasoning ?? null);
+    setEvidenceInputs(current?.evidenceInputs ?? null);
   }
 
   // ── Restore version ──────────────────────────────────────────────────────────
@@ -414,12 +544,13 @@ export function SectionEditor({
     setViewingVersionId(null);
     const current = versions.find((v) => v.isCurrent);
     if (current && editor) editor.commands.setContent(current.content);
+    setEvidenceInputs(current?.evidenceInputs ?? null);
   }
 
   // ── Generate content (SSE streaming) ──────────────────────────────────────────
   const generate = useCallback(async (contentType: 'text' | 'table' | 'visual') => {
     if (!section || isGenerating) return;
-    if (section.articleLinks.length === 0) return;
+    if (section.articleLinks.length === 0 && groundSn.size === 0 && groundVs.size === 0) return;
 
     setIsGenerating(true);
     setGenerationError('');
@@ -438,6 +569,22 @@ export function SectionEditor({
       if (raw) writingContext = JSON.parse(raw);
     } catch { /* ignore */ }
 
+    // Grounded SN statements / VS messages (Phase 5.6) — passed to the agent.
+    const snStatements = [...groundSn]
+      .map((id) => STATEMENT_BY_ID[id])
+      .filter(Boolean)
+      .map((s) => ({ id: s.id, pillar: PILLAR_BY_KEY[s.pillar]?.name ?? s.pillar, text: s.text }));
+    const vsMessages = [...groundVs]
+      .map((id) => VALUE_MESSAGES.find((m) => m.id === id))
+      .filter(Boolean)
+      .map((m) => ({
+        id: m!.id,
+        domain: DOMAIN_BY_KEY[m!.domain]?.name ?? m!.domain,
+        headline: m!.headline,
+        text: m!.text,
+        strength: m!.strength,
+      }));
+
     const payload = {
       sectionId: section.id,
       sectionNumber: section.number,
@@ -446,6 +593,8 @@ export function SectionEditor({
       contentType,
       additionalDirection: additionalDirection.trim() || undefined,
       dossierTitle,
+      snStatements,
+      vsMessages,
       articles: section.articleLinks.map((l) => ({
         articleNumber: l.articleNumber,
         title: l.title,
@@ -536,6 +685,7 @@ export function SectionEditor({
         wordCount,
         source: 'ai',
         agentReasoning: agentReasoning ?? undefined,
+        evidenceInputs: { snIds: [...groundSn], vsIds: [...groundVs] },
       });
 
       if (saved) {
@@ -544,6 +694,7 @@ export function SectionEditor({
         setViewingVersionId(null);
         editor?.commands.setContent(buffer);
         setReasoningData(agentReasoning);
+        setEvidenceInputs({ snIds: [...groundSn], vsIds: [...groundVs] });
         onSectionUpdate(section);
       }
     } catch {
@@ -552,7 +703,7 @@ export function SectionEditor({
       setIsGenerating(false);
       setGenerationProgress('');
     }
-  }, [section, isGenerating, allSections, guidance, additionalDirection, dossierId, dossierTitle, editor, onSectionUpdate]);
+  }, [section, isGenerating, allSections, guidance, additionalDirection, dossierId, dossierTitle, editor, onSectionUpdate, groundSn, groundVs]);
 
   // ── Manual save ─────────────────────────────────────────────────────────────
 
@@ -574,13 +725,71 @@ export function SectionEditor({
     }
   }
 
+  // ── SN/VS grounding toggles ───────────────────────────────────────────────────
+  function toggleGroundSn(id: string) {
+    setGroundSn((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+  function toggleGroundVs(id: string) {
+    setGroundVs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+  function togglePillar(key: string) {
+    setOpenPillars((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
+  function toggleDomain(key: string) {
+    setOpenDomains((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
+
+  // ── SN/VS insert-as-text handlers ─────────────────────────────────────────────
+  function handleInsertSn(statement: ScientificStatement) {
+    if (!editor || isViewingOld) return;
+    editor.chain().focus().insertContent(snInsertHtml(statement)).run();
+  }
+
+  function handleInsertVs(message: ValueMessage) {
+    if (!editor || isViewingOld || !section) return;
+    let didLink = false;
+    const refs: ResolvedRef[] = message.sourceRefs.map((ref) => {
+      if (ref.articleId) {
+        const num = getArticleNumber(ref.articleId);
+        if (num !== undefined) {
+          // Auto-link so the inline [#N] resolves + flows into the reference list.
+          linkArticle(dossierId, section.id, ref.articleId);
+          didLink = true;
+          return { articleNumber: num, label: ref.label };
+        }
+      }
+      return { label: ref.label };
+    });
+    editor.chain().focus().insertContent(vsInsertHtml(message, refs)).run();
+    if (didLink) onSectionUpdate(section);
+  }
+
   // ── Helpers ──────────────────────────────────────────────────────────────────
 
   const currentVersion = contentVersions.find((v) => v.isCurrent);
   const wordCount = currentVersion?.wordCount ?? 0;
   const viewingVersion = viewingVersionId ? contentVersions.find((v) => v.id === viewingVersionId) : null;
   const isViewingOld = viewingVersionId !== null;
-  const noArticles = (section?.articleLinks.length ?? 0) === 0;
+  // Generation is allowed when there are linked articles OR grounded SN/VS.
+  const noInputs = section
+    ? section.articleLinks.length === 0 && groundSn.size === 0 && groundVs.size === 0
+    : true;
   // Offer "Adapt from Global" only when this section is empty (no content
   // versions yet), Global has same-number content, and a handler is wired.
   const canAdaptFromGlobal =
@@ -747,7 +956,7 @@ export function SectionEditor({
         </div>
 
         {/* RIGHT COLUMN — Editor */}
-        <div className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex flex-col flex-1 overflow-hidden relative">
           <div className="flex-1 overflow-y-auto flex flex-col">
 
             {/* Version tabs */}
@@ -873,6 +1082,21 @@ export function SectionEditor({
                     View only — restore to edit
                   </span>
                 )}
+
+                {/* Evidence inputs drawer toggle (Phase 5.6) */}
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen((v) => !v)}
+                  title="Browse Scientific Narrative & Payer Value Story — ground generation or insert as text"
+                  className="ml-auto mr-1 px-2.5 py-1.5 rounded-[4px] text-[10px] font-mono tracking-[0.06em] uppercase border transition-all duration-150"
+                  style={{
+                    borderColor: drawerOpen ? 'var(--serif-accent)' : 'var(--serif-border)',
+                    color: 'var(--serif-accent)',
+                    backgroundColor: drawerOpen ? 'rgba(8,56,96,0.08)' : 'transparent',
+                  }}
+                >
+                  Evidence inputs · SN/VS
+                </button>
               </div>
             )}
 
@@ -950,8 +1174,8 @@ export function SectionEditor({
                   <button
                     type="button"
                     onClick={() => generate('text')}
-                    disabled={isGenerating || noArticles}
-                    title={noArticles ? 'Link references first' : 'Generate prose text'}
+                    disabled={isGenerating || noInputs}
+                    title={noInputs ? 'Link references or ground SN/VS first' : 'Generate prose text'}
                     className="px-3.5 py-2 rounded-[6px] text-xs font-medium font-mono text-white transition-all duration-150 disabled:opacity-40"
                     style={{ backgroundColor: 'var(--serif-accent)' }}
                   >
@@ -960,8 +1184,8 @@ export function SectionEditor({
                   <button
                     type="button"
                     onClick={() => generate('table')}
-                    disabled={isGenerating || noArticles}
-                    title={noArticles ? 'Link references first' : 'Generate evidence table'}
+                    disabled={isGenerating || noInputs}
+                    title={noInputs ? 'Link references or ground SN/VS first' : 'Generate evidence table'}
                     className="px-3.5 py-2 rounded-[6px] text-xs font-medium font-mono transition-all duration-150 border disabled:opacity-40"
                     style={{
                       borderColor: 'var(--serif-border)',
@@ -973,8 +1197,8 @@ export function SectionEditor({
                   <button
                     type="button"
                     onClick={() => generate('visual')}
-                    disabled={isGenerating || noArticles}
-                    title={noArticles ? 'Link references first' : 'Generate visual summary'}
+                    disabled={isGenerating || noInputs}
+                    title={noInputs ? 'Link references or ground SN/VS first' : 'Generate visual summary'}
                     className="px-3.5 py-2 rounded-[6px] text-xs font-medium font-mono transition-all duration-150 border disabled:opacity-40"
                     style={{
                       borderColor: 'var(--serif-border)',
@@ -1045,6 +1269,195 @@ export function SectionEditor({
               versionCount={contentVersions.length}
               guidanceCount={(reasoningData.guidance_coverage ?? []).length}
             />
+          )}
+
+          {/* Evidence inputs (SN/VS) coverage — shows even when reasoning is null */}
+          {evidenceInputs && (evidenceInputs.snIds.length > 0 || evidenceInputs.vsIds.length > 0) && (
+            <EvidenceInputsPanel evidenceInputs={evidenceInputs} />
+          )}
+
+          {/* SN/VS evidence-inputs drawer (overlay on the right column) */}
+          {drawerOpen && (
+            <div
+              className="absolute top-0 right-0 bottom-0 flex flex-col z-20"
+              style={{
+                width: '340px',
+                backgroundColor: 'var(--serif-card)',
+                borderLeft: '1px solid var(--serif-border)',
+                boxShadow: '-8px 0 24px rgba(0,0,0,0.06)',
+              }}
+            >
+              {/* Header */}
+              <div
+                className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
+                style={{ borderColor: 'var(--serif-border)', backgroundColor: 'var(--serif-muted)' }}
+              >
+                <span className="font-mono text-[10px] font-medium tracking-[0.08em] uppercase" style={{ color: 'var(--serif-foreground)' }}>
+                  Evidence inputs · SN/VS
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(false)}
+                  title="Close"
+                  className="w-6 h-6 flex items-center justify-center rounded-[3px] text-sm transition-colors hover:bg-[rgba(8,56,96,0.08)]"
+                  style={{ color: 'var(--serif-muted-foreground)' }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Scroll body */}
+              <div className="flex-1 overflow-y-auto">
+                {/* Hint */}
+                <p
+                  className="px-4 py-2.5 text-[11px] leading-relaxed border-b"
+                  style={{ color: 'var(--serif-muted-foreground)', borderColor: 'var(--serif-border)', backgroundColor: 'rgba(8,56,96,0.03)' }}
+                >
+                  Tick to ground generation; Insert to drop as editable text. Strength shown as a drafting aid.
+                </p>
+
+                {/* Scientific Narrative group */}
+                <div className="px-3 py-3">
+                  <p className="font-mono text-[9px] font-medium tracking-[0.12em] uppercase mb-2 px-1" style={{ color: 'var(--serif-muted-foreground)' }}>
+                    Scientific Narrative
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    {PILLARS.map((pillar) => {
+                      const expanded = openPillars.has(pillar.key);
+                      const statements = getStatementsForPillar(pillar.key);
+                      return (
+                        <div key={pillar.key}>
+                          <button
+                            type="button"
+                            onClick={() => togglePillar(pillar.key)}
+                            className="w-full flex items-center gap-2 px-1 py-1.5 text-left rounded-[3px] transition-colors hover:bg-[rgba(8,56,96,0.04)]"
+                          >
+                            <span className="text-[10px]" style={{ color: 'var(--serif-muted-foreground)' }}>
+                              {expanded ? '▾' : '▸'}
+                            </span>
+                            <span className="font-mono text-[10px] font-medium" style={{ color: 'var(--serif-accent)' }}>
+                              {pillar.number}.
+                            </span>
+                            <span className="text-xs leading-snug" style={{ color: 'var(--serif-foreground)' }}>
+                              {pillar.name}
+                            </span>
+                          </button>
+                          {expanded && (
+                            <div className="flex flex-col gap-1.5 pl-3 pr-1 pt-1 pb-2">
+                              {statements.map((s) => (
+                                <div
+                                  key={s.id}
+                                  className="flex items-start gap-2 rounded-[4px] p-2"
+                                  style={{ backgroundColor: 'rgba(8,56,96,0.04)' }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={groundSn.has(s.id)}
+                                    onChange={() => toggleGroundSn(s.id)}
+                                    title="Ground generation with this statement"
+                                    className="mt-0.5 flex-shrink-0"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-mono text-[10px] font-medium" style={{ color: 'var(--serif-accent)' }}>
+                                      {s.id}
+                                    </p>
+                                    <p className="text-[11px] leading-snug line-clamp-2" style={{ color: 'var(--serif-foreground)' }}>
+                                      {s.text}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleInsertSn(s)}
+                                    disabled={isViewingOld}
+                                    title={isViewingOld ? 'Restore to edit before inserting' : 'Insert as editable text'}
+                                    className="flex-shrink-0 font-mono text-[9px] tracking-[0.06em] uppercase px-2 py-1 rounded-[3px] border transition-all hover:opacity-80 disabled:opacity-30"
+                                    style={{ borderColor: 'var(--serif-border)', color: 'var(--serif-accent)' }}
+                                  >
+                                    Insert
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Payer Value Story group */}
+                <div className="px-3 py-3 border-t" style={{ borderColor: 'var(--serif-border)' }}>
+                  <p className="font-mono text-[9px] font-medium tracking-[0.12em] uppercase mb-2 px-1" style={{ color: 'var(--serif-muted-foreground)' }}>
+                    Payer Value Story
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    {DOMAINS.map((domain) => {
+                      const expanded = openDomains.has(domain.key);
+                      const messages = getMessagesForDomain(domain.key);
+                      return (
+                        <div key={domain.key}>
+                          <button
+                            type="button"
+                            onClick={() => toggleDomain(domain.key)}
+                            className="w-full flex items-center gap-2 px-1 py-1.5 text-left rounded-[3px] transition-colors hover:bg-[rgba(8,56,96,0.04)]"
+                          >
+                            <span className="text-[10px]" style={{ color: 'var(--serif-muted-foreground)' }}>
+                              {expanded ? '▾' : '▸'}
+                            </span>
+                            <span className="font-mono text-[10px] font-medium" style={{ color: 'var(--serif-accent)' }}>
+                              {domain.monogram}
+                            </span>
+                            <span className="text-xs leading-snug" style={{ color: 'var(--serif-foreground)' }}>
+                              {domain.name}
+                            </span>
+                          </button>
+                          {expanded && (
+                            <div className="flex flex-col gap-1.5 pl-3 pr-1 pt-1 pb-2">
+                              {messages.map((m) => (
+                                <div
+                                  key={m.id}
+                                  className="flex items-start gap-2 rounded-[4px] p-2"
+                                  style={{ backgroundColor: 'rgba(8,56,96,0.04)' }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={groundVs.has(m.id)}
+                                    onChange={() => toggleGroundVs(m.id)}
+                                    title="Ground generation with this message"
+                                    className="mt-0.5 flex-shrink-0"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                      <span className="font-mono text-[10px] font-medium" style={{ color: 'var(--serif-accent)' }}>
+                                        {m.id}
+                                      </span>
+                                      <StrengthBadge label={strengthLabel(m)} />
+                                    </div>
+                                    <p className="text-[11px] leading-snug line-clamp-2" style={{ color: 'var(--serif-foreground)' }}>
+                                      {m.headline}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleInsertVs(m)}
+                                    disabled={isViewingOld}
+                                    title={isViewingOld ? 'Restore to edit before inserting' : 'Insert as editable text'}
+                                    className="flex-shrink-0 font-mono text-[9px] tracking-[0.06em] uppercase px-2 py-1 rounded-[3px] border transition-all hover:opacity-80 disabled:opacity-30"
+                                    style={{ borderColor: 'var(--serif-border)', color: 'var(--serif-accent)' }}
+                                  >
+                                    Insert
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>

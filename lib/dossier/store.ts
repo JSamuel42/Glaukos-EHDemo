@@ -49,6 +49,12 @@ export function resolveArticle(libraryArticleId: string): Article | undefined {
   return ARTICLES.find((a) => a.pmid === libraryArticleId);
 }
 
+/** 1-based Library article number for a canonical id, or undefined if absent. */
+export function getArticleNumber(libraryArticleId: string): number | undefined {
+  const a = resolveArticle(libraryArticleId);
+  return a ? ARTICLE_NUMBER_BY_ID.get(a.id) : undefined;
+}
+
 // ── Internal storage types ────────────────────────────────────────────────────
 
 export interface StoredArticleLink {
@@ -68,6 +74,8 @@ export interface StoredContentVersion {
   wordCount: number;
   source: ContentSource;
   agentReasoning?: AgentReasoning;
+  /** SN/VS ids that grounded this version (Phase 5.6). */
+  evidenceInputs?: { snIds: string[]; vsIds: string[] };
   createdAt: string;
 }
 
@@ -534,6 +542,7 @@ export interface SaveContentInput {
   wordCount: number;
   source: ContentSource;
   agentReasoning?: AgentReasoning;
+  evidenceInputs?: { snIds: string[]; vsIds: string[] };
 }
 
 /** Save a new content version (max 3). Returns the new version entry. */
@@ -569,6 +578,7 @@ export function saveContentVersion(
     wordCount: input.wordCount,
     source: input.source,
     agentReasoning: input.agentReasoning,
+    evidenceInputs: input.evidenceInputs,
     createdAt: new Date().toISOString(),
   };
 
